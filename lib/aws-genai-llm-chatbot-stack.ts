@@ -110,7 +110,6 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
       const ideficsInterface = new IdeficsInterface(this, "IdeficsInterface", {
         shared,
         config: props.config,
-        ragEngines,
         messagesTopic: chatBotApi.messagesTopic,
         sessionsTable: chatBotApi.sessionsTable,
         byUserIdIndex: chatBotApi.byUserIdIndex,

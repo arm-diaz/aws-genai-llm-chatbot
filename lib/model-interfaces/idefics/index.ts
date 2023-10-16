@@ -4,7 +4,6 @@ import { CfnEndpoint } from "aws-cdk-lib/aws-sagemaker";
 import { Construct } from "constructs";
 import { Shared } from "../../shared";
 import { SystemConfig } from "../../shared/types";
-import { RagEngines } from "../../rag-engines";
 import * as sns from "aws-cdk-lib/aws-sns";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
@@ -15,7 +14,6 @@ import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 interface IdeficsInterfaceProps {
   readonly shared: Shared;
   readonly config: SystemConfig;
-  readonly ragEngines?: RagEngines;
   readonly messagesTopic: sns.Topic;
   readonly sessionsTable: dynamodb.Table;
   readonly byUserIdIndex: string;
