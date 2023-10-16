@@ -32,34 +32,6 @@ def send_to_client(detail):
         Message=json.dumps(detail),
     )
 
-
-def on_llm_new_token(
-    connection_id, user_id, session_id, self, token, run_id, *args, **kwargs
-):
-    global sequence_number
-    sequence_number += 1
-    run_id = str(run_id)
-
-    send_to_client(
-        {
-            "type": "text",
-            "action": "llm_new_token",
-            "direction": "OUT",
-            "connectionId": connection_id,
-            "userId": user_id,
-            "timestamp": str(int(round(datetime.now().timestamp()))),
-            "data": {
-                "sessionId": session_id,
-                "token": {
-                    "runId": run_id,
-                    "sequenceNumber": sequence_number,
-                    "value": token,
-                },
-            },
-        }
-    )
-
-
 def handle_run(record):
     connection_id = record["connectionId"]
     user_id = record["userId"]

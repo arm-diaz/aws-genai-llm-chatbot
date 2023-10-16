@@ -54,12 +54,11 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
     // Langchain Interface Construct
     // This is the model interface recieving messages from the websocket interface via the message topic
     // and interacting with the model via LangChain library
-
-    // check if any model requires langchain interface or if bedrock is enabled from config
     const langchainModels = models.models.filter(
       (model) => model.interface === ModelInterface.LangChain
     );
 
+    // check if any model requires langchain interface or if bedrock is enabled from config
     if (langchainModels.length > 0 || props.config.bedrock?.enabled) {
       const langchainInterface = new LangChainInterface(
         this,
@@ -101,13 +100,12 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
 
     // IDEFICS Interface Construct
     // This is the model interface recieving messages from the websocket interface via the message topic
-    // and interacting with IDEFICS visuallanguage models
-
-    // check if any model requires idefics interface
+    // and interacting with IDEFICS visual language models
     const ideficsModels = models.models.filter(
       (model) => model.interface === ModelInterface.Idefics
     );
 
+    // check if any model requires idefics interface
     if (ideficsModels.length > 0) {
       const ideficsInterface = new IdeficsInterface(this, "IdeficsInterface", {
         shared,

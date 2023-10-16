@@ -45,149 +45,14 @@ export class IdeficsInterface extends Construct {
           CONFIG_PARAMETER_NAME: props.shared.configParameter.parameterName,
           SESSIONS_TABLE_NAME: props.sessionsTable.tableName,
           SESSIONS_BY_USER_ID_INDEX_NAME: props.byUserIdIndex,
-          API_KEYS_SECRETS_ARN: props.shared.apiKeysSecret.secretArn,
           MESSAGES_TOPIC_ARN: props.messagesTopic.topicArn,
-          WORKSPACES_TABLE_NAME:
-            props.ragEngines?.workspacesTable.tableName ?? "",
-          WORKSPACES_BY_OBJECT_TYPE_INDEX_NAME:
-            props.ragEngines?.workspacesByObjectTypeIndexName ?? "",
-          AURORA_DB_SECRET_ID: props.ragEngines?.auroraPgVector?.database
-            ?.secret?.secretArn as string,
-          SAGEMAKER_RAG_MODELS_ENDPOINT:
-            props.ragEngines?.sageMakerRagModelsEndpoint?.attrEndpointName ??
-            "",
-          OPEN_SEARCH_COLLECTION_ENDPOINT:
-            props.ragEngines?.openSearchVector?.openSearchCollectionEndpoint ??
-            "",
-          DEFAULT_KENDRA_INDEX_ID:
-            props.ragEngines?.kendraRetrieval?.kendraIndex?.attrId ?? "",
-          DEFAULT_KENDRA_INDEX_NAME:
-            props.ragEngines?.kendraRetrieval?.kendraIndex?.name ?? "",
-          DEFAULT_KENDRA_S3_DATA_SOURCE_ID:
-            props.ragEngines?.kendraRetrieval?.kendraS3DataSource?.attrId ?? "",
-          DEFAULT_KENDRA_S3_DATA_SOURCE_BUCKET_NAME:
-            props.ragEngines?.kendraRetrieval?.kendraS3DataSourceBucket
-              ?.bucketName ?? "",
         },
       }
     );
 
-    if (props.config.bedrock?.enabled) {
-      requestHandler.addToRolePolicy(
-        new iam.PolicyStatement({
-          actions: [
-            "bedrock:InvokeModel",
-            "bedrock:InvokeModelWithResponseStream",
-          ],
-          resources: ["*"],
-        })
-      );
-
-      if (props.config.bedrock?.roleArn) {
-        requestHandler.addToRolePolicy(
-          new iam.PolicyStatement({
-            actions: ["sts:AssumeRole"],
-            resources: [props.config.bedrock.roleArn],
-          })
-        );
-      }
-    }
-
-    if (props.ragEngines?.auroraPgVector) {
-      props.ragEngines?.auroraPgVector.database.secret?.grantRead(
-        requestHandler
-      );
-      props.ragEngines?.auroraPgVector.database.connections.allowDefaultPortFrom(
-        requestHandler
-      );
-    }
-
-    if (props.ragEngines?.openSearchVector) {
-      requestHandler.addToRolePolicy(
-        new iam.PolicyStatement({
-          actions: ["aoss:APIAccessAll"],
-          resources: [
-            props.ragEngines?.openSearchVector.openSearchCollection.attrArn,
-          ],
-        })
-      );
-
-      props.ragEngines.openSearchVector.addToAccessPolicy(
-        "request-handler-vlm",
-        [requestHandler.role?.roleArn],
-        ["aoss:ReadDocument", "aoss:WriteDocument"]
-      );
-    }
-
-    if (props.ragEngines) {
-      props.ragEngines.workspacesTable.grantReadWriteData(requestHandler);
-      props.ragEngines.documentsTable.grantReadWriteData(requestHandler);
-
-      requestHandler.addToRolePolicy(
-        new iam.PolicyStatement({
-          actions: ["sagemaker:InvokeEndpoint"],
-          resources: [props.ragEngines?.sageMakerRagModelsEndpoint.ref],
-        })
-      );
-    }
-
-    if (props.ragEngines?.kendraRetrieval) {
-      props.ragEngines?.kendraRetrieval?.kendraS3DataSourceBucket?.grantRead(
-        requestHandler
-      );
-
-      if (props.ragEngines.kendraRetrieval.kendraIndex) {
-        requestHandler.addToRolePolicy(
-          new iam.PolicyStatement({
-            actions: ["kendra:Retrieve", "kendra:Query"],
-            resources: [props.ragEngines.kendraRetrieval.kendraIndex.attrArn],
-          })
-        );
-      }
-
-      for (const item of props.config.rag.engines.kendra.external || []) {
-        if (item.roleArn) {
-          requestHandler.addToRolePolicy(
-            new iam.PolicyStatement({
-              actions: ["sts:AssumeRole"],
-              resources: [item.roleArn],
-            })
-          );
-        } else {
-          requestHandler.addToRolePolicy(
-            new iam.PolicyStatement({
-              actions: ["kendra:Retrieve", "kendra:Query"],
-              resources: [
-                `arn:aws:kendra:${item.region}:${cdk.Aws.ACCOUNT_ID}:index/${item.kendraId}`,
-              ],
-            })
-          );
-        }
-      }
-    }
-
     props.sessionsTable.grantReadWriteData(requestHandler);
     props.messagesTopic.grantPublish(requestHandler);
-    props.shared.apiKeysSecret.grantRead(requestHandler);
     props.shared.configParameter.grantRead(requestHandler);
-
-    // Add Amazon Bedrock permissions to the IAM role for the Lambda function
-    requestHandler.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ["bedrock:*", "bedrock:InvokeModelWithResponseStream"],
-        resources: ["*"],
-      })
-    );
-
-    requestHandler.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: [
-          "comprehend:DetectDominantLanguage",
-          "comprehend:DetectSentiment",
-        ],
-        resources: ["*"],
-      })
-    );
 
     const deadLetterQueue = new sqs.Queue(this, "GenericModelInterfaceDLQ");
     const queue = new sqs.Queue(this, "GenericModelInterfaceQueue", {
