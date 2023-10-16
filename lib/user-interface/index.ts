@@ -221,7 +221,7 @@ export class UserInterface extends Construct {
         s3.HttpMethods.POST,
         s3.HttpMethods.DELETE,
       ],
-      allowedOrigins: ['*'],
+      allowedOrigins: ["*"],
       allowedHeaders: ["*"],
       exposedHeaders: [
         "x-amz-server-side-encryption",

@@ -30,7 +30,6 @@ export default function ImageDialog(props: ImageDialogProps) {
   const [disableFileUpload, setDisableFileUpload] = useState<boolean>(false);
   const [disableUrl, setDisableUrl] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  
 
   const { onChange, errors, validate } = useForm({
     initialValue: () => {
@@ -68,6 +67,29 @@ export default function ImageDialog(props: ImageDialogProps) {
     props.setVisible(false);
   };
 
+  const validateFile = (files: File[]) => {
+    setError(null);
+    // ensure the first file type MIME is images png, jpg, jpeg, gif or svg and less than 5MB only
+    if (files.length === 0) return false;
+
+    const file = files[0];
+
+    if (file.size > 25 * 1024 * 1024) {
+      setError("File size must be less than 25MB");
+      return false;
+    }
+
+    const allowedTypes = ["image/png", "image/jpg", "image/jpeg"];
+    if (!allowedTypes.includes(file.type)) {
+      setError("File type must be png, jpg or jpeg");
+      return false;
+    }
+
+    setError(null);
+
+    return true;
+  };
+
   useEffect(() => {
     if (files.length === 0) {
       setDisableUrl(false);
@@ -84,7 +106,10 @@ export default function ImageDialog(props: ImageDialogProps) {
         const url = await Storage.put(shortId, file, {
           level: "public",
         });
-        const signedUrl = await Storage.get(url.key, { level: "public", expires: 60 * 60 });
+        const signedUrl = await Storage.get(url.key, {
+          level: "public",
+          expires: 60 * 60,
+        });
         setFileUrl(signedUrl);
       } catch (error) {
         const errorMessage = "Error uploading file: " + error;
@@ -98,7 +123,6 @@ export default function ImageDialog(props: ImageDialogProps) {
 
     uploadFile();
   }, [files]);
-  
 
   useEffect(() => {
     if (fileUrl) {
@@ -106,8 +130,7 @@ export default function ImageDialog(props: ImageDialogProps) {
     } else {
       setDisableFileUpload(false);
     }
-  }
-  , [fileUrl]);
+  }, [fileUrl]);
 
   return (
     <Modal
@@ -149,27 +172,27 @@ export default function ImageDialog(props: ImageDialogProps) {
             description="You can upload an image to be used for this conversation."
           >
             {!disableFileUpload && (
-            <FileUpload
-              onChange={({ detail }) => {
-                setFiles(detail.value)
-                setFileUrl(null);
-              }}
-              value={files}
-              i18nStrings={{
-                uploadButtonText: (e) => (e ? "Choose files" : "Choose file"),
-                dropzoneText: (e) =>
-                  e ? "Drop files to upload" : "Drop file to upload",
-                removeFileAriaLabel: (e) => `Remove file ${e + 1}`,
-                limitShowFewer: "Show fewer files",
-                limitShowMore: "Show more files",
-                errorIconAriaLabel: "Error",
-              }}
-              
-              errorText={error}
-              showFileThumbnail
-              tokenLimit={3}
-              constraintText=".png, .jpg, .jpeg"
-            />
+              <FileUpload
+                onChange={({ detail }) => {
+                  if (!validateFile(detail.value)) return;
+                  setFiles(detail.value);
+                  setFileUrl(null);
+                }}
+                value={files}
+                i18nStrings={{
+                  uploadButtonText: (e) => (e ? "Choose files" : "Choose file"),
+                  dropzoneText: (e) =>
+                    e ? "Drop files to upload" : "Drop file to upload",
+                  removeFileAriaLabel: (e) => `Remove file ${e + 1}`,
+                  limitShowFewer: "Show fewer files",
+                  limitShowMore: "Show more files",
+                  errorIconAriaLabel: "Error",
+                }}
+                errorText={error}
+                showFileThumbnail
+                tokenLimit={3}
+                constraintText=".png, .jpg, .jpeg"
+              />
             )}
             {disableFileUpload && (
               <Button
@@ -183,14 +206,9 @@ export default function ImageDialog(props: ImageDialogProps) {
                 Upload a file
               </Button>
             )}
-
           </FormField>
-          {loading && (
-          <Spinner />
-          )}
-          {fileUrl && (
-            <img src={fileUrl} style={{ width: "100px" }} />
-          )}
+          {loading && <Spinner />}
+          {fileUrl && <img src={fileUrl} style={{ width: "100px" }} />}
         </SpaceBetween>
       </Form>
     </Modal>
