@@ -13,6 +13,7 @@ import { useForm } from "../../common/hooks/use-form";
 import { ChatBotConfiguration } from "./types";
 import { Dispatch, useEffect, useState } from "react";
 import { Storage } from "aws-amplify";
+import { v4 as uuidv4 } from "uuid";
 
 export interface ImageDialogProps {
   sessionId: string;
@@ -78,10 +79,12 @@ export default function ImageDialog(props: ImageDialogProps) {
     const uploadFile = async () => {
       console.log(file);
       try {
-        const url = await Storage.put(file.name, file, {
+        const id = uuidv4();
+        const shortId = id.split("-")[0];
+        const url = await Storage.put(shortId, file, {
           level: "public",
         });
-        const signedUrl = await Storage.get(url.key, { level: "public" });
+        const signedUrl = await Storage.get(url.key, { level: "public", expires: 60 * 60 });
         setFileUrl(signedUrl);
       } catch (error) {
         const errorMessage = "Error uploading file: " + error;
@@ -117,7 +120,7 @@ export default function ImageDialog(props: ImageDialogProps) {
               Cancel
             </Button>
             <Button variant="primary" onClick={saveConfig}>
-              Save changes
+              Save
             </Button>
           </SpaceBetween>
         </Box>
