@@ -180,7 +180,8 @@ async function processCreateOptions(options: any): Promise<void> {
     {
       type: "multiselect",
       name: "ragsToEnable",
-      message: "Which datastores do you want to enable for RAG (enter for None, space to select)",
+      message:
+        "Which datastores do you want to enable for RAG (enter for None, space to select)",
       choices: [
         { message: "Aurora", name: "aurora" },
         { message: "OpenSearch", name: "opensearch" },

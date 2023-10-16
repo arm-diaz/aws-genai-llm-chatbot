@@ -70,35 +70,6 @@ export class Models extends Construct {
     }
 
     if (
-      props.config.llms?.sagemaker.includes(SupportedSageMakerLLM.FalconLite2)
-    ) {
-      const falconLite = new SageMakerModel(this, "FalconLite2", {
-        vpc: props.shared.vpc,
-        region: cdk.Aws.REGION,
-        model: {
-          type: DeploymentType.Container,
-          modelId: "amazon/FalconLite2",
-          container: ContainerImages.HF_PYTORCH_LLM_TGI_INFERENCE_1_0_3,
-          instanceType: "ml.g5.2xlarge",
-          containerStartupHealthCheckTimeoutInSeconds: 300,
-          env: {
-            SM_NUM_GPUS: JSON.stringify(1),
-          },
-        },
-      });
-
-      models.push({
-        name: falconLite.endpoint.endpointName!,
-        endpoint: falconLite.endpoint,
-        responseStreamingSupported: false,
-        inputModalities: [Modality.Text],
-        outputModalities: [Modality.Text],
-        interface: ModelInterface.LangChain,
-        ragSupported: true,
-      });
-    }
-
-    if (
       props.config.llms?.sagemaker.includes(SupportedSageMakerLLM.Mistral7b)
     ) {
       const mistral7b = new SageMakerModel(this, "Mistral7B", {
@@ -152,68 +123,6 @@ export class Models extends Construct {
       models.push({
         name: mistral7bInstruct.endpoint.endpointName!,
         endpoint: mistral7bInstruct.endpoint,
-        responseStreamingSupported: false,
-        inputModalities: [Modality.Text],
-        outputModalities: [Modality.Text],
-        interface: ModelInterface.LangChain,
-        ragSupported: true,
-      });
-    }
-
-    if (props.config.llms?.sagemaker.includes(SupportedSageMakerLLM.Aguila7b)) {
-      const aguila7b = new SageMakerModel(this, "Aguila7b", {
-        vpc: props.shared.vpc,
-        region: cdk.Aws.REGION,
-        model: {
-          type: DeploymentType.Container,
-          modelId: "projecte-aina/aguila-7b",
-          container: ContainerImages.HF_PYTORCH_LLM_TGI_INFERENCE_1_1_0,
-          instanceType: "ml.g5.2xlarge",
-          containerStartupHealthCheckTimeoutInSeconds: 300,
-          env: {
-            SM_NUM_GPUS: JSON.stringify(1),
-          },
-        },
-      });
-
-      models.push({
-        name: aguila7b.endpoint.endpointName!,
-        endpoint: aguila7b.endpoint,
-        responseStreamingSupported: false,
-        inputModalities: [Modality.Text],
-        outputModalities: [Modality.Text],
-        interface: ModelInterface.LangChain,
-        ragSupported: true,
-      });
-    }
-
-    if (
-      props.config.llms?.sagemaker.includes(
-        SupportedSageMakerLLM.LeoHessianai7b_Chat
-      )
-    ) {
-      const leoHessianai7bChat = new SageMakerModel(
-        this,
-        "LeoHessianai7bChat",
-        {
-          vpc: props.shared.vpc,
-          region: cdk.Aws.REGION,
-          model: {
-            type: DeploymentType.Container,
-            modelId: "LeoLM/leo-hessianai-7b-chat-bilingual",
-            container: ContainerImages.HF_PYTORCH_LLM_TGI_INFERENCE_1_1_0,
-            instanceType: "ml.g5.2xlarge",
-            containerStartupHealthCheckTimeoutInSeconds: 300,
-            env: {
-              SM_NUM_GPUS: JSON.stringify(1),
-            },
-          },
-        }
-      );
-
-      models.push({
-        name: leoHessianai7bChat.endpoint.endpointName!,
-        endpoint: leoHessianai7bChat.endpoint,
         responseStreamingSupported: false,
         inputModalities: [Modality.Text],
         outputModalities: [Modality.Text],

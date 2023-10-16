@@ -50,7 +50,7 @@ export interface ChatBotRunRequest {
     provider: string;
     sessionId?: string;
     imageUrl: string | null | undefined;
-    filesUrl: null | string[]; 
+    filesUrl: null | string[];
     text: string;
     mode: string;
     workspaceId?: string;

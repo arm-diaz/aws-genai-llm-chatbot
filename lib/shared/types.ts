@@ -3,15 +3,11 @@ import * as sagemaker from "aws-cdk-lib/aws-sagemaker";
 export type ModelProvider = "sagemaker" | "bedrock" | "openai";
 
 export enum SupportedSageMakerLLM {
-  FalconLite2 = "FalconLite2",
   FalconLite = "FalconLite",
   Llama2_13b_Chat = "Llama2_13b_Chat",
   Llama2_13b_Base = "Llama2_13b_Base",
   Mistral7b = "Mistral7b",
   Mistral7b_Instruct = "Mistral7b_Instruct",
-  Aguila7b = "Aguila7b",
-  LeoHessianai7b_Chat = "LeoHessianai7b_Chat",
-  Jais13b_Chat = "Jais13b_Chat",
 }
 
 export enum SupportedSageMakerVLM {
