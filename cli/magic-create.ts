@@ -8,6 +8,7 @@ import * as enquirer from "enquirer";
 import {
   SupportedRegion,
   SupportedSageMakerLLM,
+  SupportedSageMakerVLM,
   SystemConfig,
 } from "../lib/shared/types";
 import { LIB_VERSION } from "./version.js";
@@ -62,6 +63,7 @@ const embeddingModels = [
       options.bedrockEndpoint = config.bedrock?.endpointUrl;
       options.bedrockRoleArn = config.bedrock?.roleArn;
       options.sagemakerLLMs = config.llms.sagemaker;
+      options.sagemakerVLMs = config.vlms.sagemaker;
       options.enableRag = config.rag.enabled;
       options.ragsToEnable = Object.keys(config.rag.engines).filter(
         (v: string) => (config.rag.engines as any)[v].enabled
@@ -125,6 +127,7 @@ async function processCreateOptions(options: any): Promise<void> {
         SupportedRegion.US_WEST_2,
         SupportedRegion.EU_CENTRAL_1,
         SupportedRegion.AP_SOUTHEAST_1,
+        SupportedRegion.AP_NORTHEAST_1,
       ],
       initial: options.bedrockRegion ?? "us-east-1",
       skip() {
@@ -156,9 +159,17 @@ async function processCreateOptions(options: any): Promise<void> {
       type: "multiselect",
       name: "sagemakerLLMs",
       message:
-        "Which Sagemaker LLMs do you want to enable (enter for None, space to select)",
+        "Which Sagemaker Large Langugage Models do you want to enable (enter for None, space to select)",
       choices: Object.values(SupportedSageMakerLLM),
       initial: options.sagemakerLLMs || [],
+    },
+    {
+      type: "multiselect",
+      name: "sagemakerVLMs",
+      message:
+        "Which Sagemaker Visual Language Models do you want to enable (enter for None, space to select)",
+      choices: Object.values(SupportedSageMakerVLM),
+      initial: options.sagemakerVLMs || [],
     },
     {
       type: "confirm",
@@ -169,7 +180,7 @@ async function processCreateOptions(options: any): Promise<void> {
     {
       type: "multiselect",
       name: "ragsToEnable",
-      message: "Which datastores do you want to enable for RAG",
+      message: "Which datastores do you want to enable for RAG (enter for None, space to select)",
       choices: [
         { message: "Aurora", name: "aurora" },
         { message: "OpenSearch", name: "opensearch" },
@@ -302,6 +313,9 @@ async function processCreateOptions(options: any): Promise<void> {
       : undefined,
     llms: {
       sagemaker: answers.sagemakerLLMs,
+    },
+    vlms: {
+      sagemaker: answers.sagemakerVLMs,
     },
     rag: {
       enabled: answers.enableRag,

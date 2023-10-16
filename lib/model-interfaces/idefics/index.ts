@@ -12,7 +12,7 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 
-interface LangChainInterfaceProps {
+interface IdeficsInterfaceProps {
   readonly shared: Shared;
   readonly config: SystemConfig;
   readonly ragEngines?: RagEngines;
@@ -21,58 +21,56 @@ interface LangChainInterfaceProps {
   readonly byUserIdIndex: string;
 }
 
-export class LangChainInterface extends Construct {
+export class IdeficsInterface extends Construct {
   public readonly ingestionQueue: sqs.Queue;
   public readonly requestHandler: lambda.Function;
 
-  constructor(scope: Construct, id: string, props: LangChainInterfaceProps) {
+  constructor(scope: Construct, id: string, props: IdeficsInterfaceProps) {
     super(scope, id);
 
-    const requestHandler = new lambda.Function(this, "RequestHandler", {
-      vpc: props.shared.vpc,
-      code: lambda.Code.fromAsset(
-        path.join(__dirname, "./functions/request-handler")
-      ),
-      handler: "index.handler",
-      runtime: props.shared.pythonRuntime,
-      architecture: props.shared.lambdaArchitecture,
-      tracing: lambda.Tracing.ACTIVE,
-      timeout: cdk.Duration.minutes(15),
-      memorySize: 1024,
-      layers: [
-        props.shared.powerToolsLayer,
-        props.shared.commonLayer.layer,
-        props.shared.pythonSDKLayer,
-      ],
-      environment: {
-        ...props.shared.defaultEnvironmentVariables,
-        CONFIG_PARAMETER_NAME: props.shared.configParameter.parameterName,
-        SESSIONS_TABLE_NAME: props.sessionsTable.tableName,
-        SESSIONS_BY_USER_ID_INDEX_NAME: props.byUserIdIndex,
-        API_KEYS_SECRETS_ARN: props.shared.apiKeysSecret.secretArn,
-        MESSAGES_TOPIC_ARN: props.messagesTopic.topicArn,
-        WORKSPACES_TABLE_NAME:
-          props.ragEngines?.workspacesTable.tableName ?? "",
-        WORKSPACES_BY_OBJECT_TYPE_INDEX_NAME:
-          props.ragEngines?.workspacesByObjectTypeIndexName ?? "",
-        AURORA_DB_SECRET_ID: props.ragEngines?.auroraPgVector?.database?.secret
-          ?.secretArn as string,
-        SAGEMAKER_RAG_MODELS_ENDPOINT:
-          props.ragEngines?.sageMakerRagModelsEndpoint?.attrEndpointName ?? "",
-        OPEN_SEARCH_COLLECTION_ENDPOINT:
-          props.ragEngines?.openSearchVector?.openSearchCollectionEndpoint ??
-          "",
-        DEFAULT_KENDRA_INDEX_ID:
-          props.ragEngines?.kendraRetrieval?.kendraIndex?.attrId ?? "",
-        DEFAULT_KENDRA_INDEX_NAME:
-          props.ragEngines?.kendraRetrieval?.kendraIndex?.name ?? "",
-        DEFAULT_KENDRA_S3_DATA_SOURCE_ID:
-          props.ragEngines?.kendraRetrieval?.kendraS3DataSource?.attrId ?? "",
-        DEFAULT_KENDRA_S3_DATA_SOURCE_BUCKET_NAME:
-          props.ragEngines?.kendraRetrieval?.kendraS3DataSourceBucket
-            ?.bucketName ?? "",
-      },
-    });
+    const requestHandler = new lambda.DockerImageFunction(
+      this,
+      "IdeficsInterfaceRequestHandler",
+      {
+        vpc: props.shared.vpc,
+        code: lambda.DockerImageCode.fromImageAsset(
+          path.join(__dirname, "./functions/request-handler")
+        ),
+        architecture: props.shared.lambdaArchitecture,
+        tracing: lambda.Tracing.ACTIVE,
+        timeout: cdk.Duration.minutes(15),
+        memorySize: 1024,
+        environment: {
+          ...props.shared.defaultEnvironmentVariables,
+          CONFIG_PARAMETER_NAME: props.shared.configParameter.parameterName,
+          SESSIONS_TABLE_NAME: props.sessionsTable.tableName,
+          SESSIONS_BY_USER_ID_INDEX_NAME: props.byUserIdIndex,
+          API_KEYS_SECRETS_ARN: props.shared.apiKeysSecret.secretArn,
+          MESSAGES_TOPIC_ARN: props.messagesTopic.topicArn,
+          WORKSPACES_TABLE_NAME:
+            props.ragEngines?.workspacesTable.tableName ?? "",
+          WORKSPACES_BY_OBJECT_TYPE_INDEX_NAME:
+            props.ragEngines?.workspacesByObjectTypeIndexName ?? "",
+          AURORA_DB_SECRET_ID: props.ragEngines?.auroraPgVector?.database
+            ?.secret?.secretArn as string,
+          SAGEMAKER_RAG_MODELS_ENDPOINT:
+            props.ragEngines?.sageMakerRagModelsEndpoint?.attrEndpointName ??
+            "",
+          OPEN_SEARCH_COLLECTION_ENDPOINT:
+            props.ragEngines?.openSearchVector?.openSearchCollectionEndpoint ??
+            "",
+          DEFAULT_KENDRA_INDEX_ID:
+            props.ragEngines?.kendraRetrieval?.kendraIndex?.attrId ?? "",
+          DEFAULT_KENDRA_INDEX_NAME:
+            props.ragEngines?.kendraRetrieval?.kendraIndex?.name ?? "",
+          DEFAULT_KENDRA_S3_DATA_SOURCE_ID:
+            props.ragEngines?.kendraRetrieval?.kendraS3DataSource?.attrId ?? "",
+          DEFAULT_KENDRA_S3_DATA_SOURCE_BUCKET_NAME:
+            props.ragEngines?.kendraRetrieval?.kendraS3DataSourceBucket
+              ?.bucketName ?? "",
+        },
+      }
+    );
 
     if (props.config.bedrock?.enabled) {
       requestHandler.addToRolePolicy(
@@ -115,7 +113,7 @@ export class LangChainInterface extends Construct {
       );
 
       props.ragEngines.openSearchVector.addToAccessPolicy(
-        "request-handler-langchain",
+        "request-handler-vlm",
         [requestHandler.role?.roleArn],
         ["aoss:ReadDocument", "aoss:WriteDocument"]
       );
@@ -191,8 +189,8 @@ export class LangChainInterface extends Construct {
       })
     );
 
-    const deadLetterQueue = new sqs.Queue(this, "LangchainModelInterfaceDLQ");
-    const queue = new sqs.Queue(this, "LangchainModelInterfaceQueue", {
+    const deadLetterQueue = new sqs.Queue(this, "GenericModelInterfaceDLQ");
+    const queue = new sqs.Queue(this, "GenericModelInterfaceQueue", {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       // https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#events-sqs-queueconfig
       visibilityTimeout: cdk.Duration.minutes(15 * 6),

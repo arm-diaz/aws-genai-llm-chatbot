@@ -32,7 +32,7 @@ export default function Welcome() {
           header={
             <Header
               variant="h1"
-              description="An opensource, modular and comprehensive solution to deploy a multi LLM powered chatbot using AWS CDK on AWS."
+              description="An opensource, modular and comprehensive solution to deploy a multi LLM/VLM powered chatbot using AWS CDK on AWS."
               actions={
                 <RouterButton
                   iconAlign="right"
@@ -145,7 +145,7 @@ export default function Welcome() {
                   Cognito Authentication
                 </Link>{" "}
                 to help you interact and experiment with{" "}
-                <strong>multiple LLMs</strong>,{" "}
+                <strong>multiple LLMs and VLMs</strong>,{" "}
                 <strong>multiple RAG sources</strong>,{" "}
                 <strong>conversational history support</strong> and{" "}
                 <strong>documents upload</strong>.

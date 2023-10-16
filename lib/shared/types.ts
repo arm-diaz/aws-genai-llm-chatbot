@@ -3,9 +3,20 @@ import * as sagemaker from "aws-cdk-lib/aws-sagemaker";
 export type ModelProvider = "sagemaker" | "bedrock" | "openai";
 
 export enum SupportedSageMakerLLM {
+  FalconLite2 = "FalconLite2",
   FalconLite = "FalconLite",
   Llama2_13b_Chat = "Llama2_13b_Chat",
   Llama2_13b_Base = "Llama2_13b_Base",
+  Mistral7b = "Mistral7b",
+  Mistral7b_Instruct = "Mistral7b_Instruct",
+  Aguila7b = "Aguila7b",
+  LeoHessianai7b_Chat = "LeoHessianai7b_Chat",
+  Jais13b_Chat = "Jais13b_Chat",
+}
+
+export enum SupportedSageMakerVLM {
+  Idefics_9b = "Idefics_9b",
+  Idefics_80b = "Idefics_80b",
 }
 
 export enum SupportedRegion {
@@ -39,6 +50,22 @@ export enum SupportedRegion {
   US_WEST_2 = "us-west-2",
 }
 
+export enum ModelInterface {
+  LangChain = "langchain",
+  Idefics = "idefics",
+}
+
+export enum Modality {
+  Text = "TEXT",
+  Image = "IMAGE",
+  Embedding = "EMBEDDING",
+}
+
+export enum Direction {
+  In = "IN",
+  Out = "OUT",
+}
+
 export interface SystemConfig {
   prefix: string;
   vpc?: {
@@ -53,6 +80,9 @@ export interface SystemConfig {
   };
   llms: {
     sagemaker: SupportedSageMakerLLM[];
+  };
+  vlms: {
+    sagemaker: SupportedSageMakerVLM[];
   };
   rag: {
     enabled: boolean;
@@ -91,4 +121,14 @@ export interface SystemConfig {
 export interface SageMakerLLMEndpoint {
   name: string;
   endpoint: sagemaker.CfnEndpoint;
+}
+
+export interface SageMakerModelEndpoint {
+  name: string;
+  endpoint: sagemaker.CfnEndpoint;
+  responseStreamingSupported: boolean;
+  inputModalities: Modality[];
+  outputModalities: Modality[];
+  interface: ModelInterface;
+  ragSupported: boolean;
 }

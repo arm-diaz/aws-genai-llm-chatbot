@@ -75,7 +75,7 @@ export function deployContainerModel(
 
   const endpoint = new sagemaker.CfnEndpoint(scope, modelId, {
     endpointConfigName: endpointConfig.getAtt("EndpointConfigName").toString(),
-    endpointName: modelId.split("/").join("-"),
+    endpointName: modelId.split("/").join("-").split(".").join("-"),
   });
 
   endpoint.addDependency(endpointConfig);

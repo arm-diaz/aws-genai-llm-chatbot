@@ -1,6 +1,7 @@
 import * as path from "path";
 import { Construct } from "constructs";
 import { Shared } from "../shared";
+import { Direction } from "../shared/types";
 import { WebSocketLambdaAuthorizer } from "@aws-cdk/aws-apigatewayv2-authorizers-alpha";
 import { WebSocketLambdaIntegration } from "@aws-cdk/aws-apigatewayv2-integrations-alpha";
 import * as apigwv2 from "@aws-cdk/aws-apigatewayv2-alpha";
@@ -213,7 +214,7 @@ export class WebSocketApi extends Construct {
         filterPolicyWithMessageBody: {
           direction: sns.FilterOrPolicy.filter(
             sns.SubscriptionFilter.stringFilter({
-              allowlist: ["OUT"],
+              allowlist: [Direction.Out],
             })
           ),
         },

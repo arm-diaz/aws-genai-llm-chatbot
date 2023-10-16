@@ -1,6 +1,6 @@
 import { Construct } from "constructs";
 import { Shared } from "../shared";
-import { SageMakerLLMEndpoint, SystemConfig } from "../shared/types";
+import { SageMakerModelEndpoint, SystemConfig } from "../shared/types";
 import { RestApi } from "./rest-api";
 import { WebSocketApi } from "./websocket-api";
 import { ChatBotDynamoDBTables } from "./chatbot-dynamodb-tables";
@@ -17,8 +17,8 @@ export interface ChatBotApiProps {
   readonly config: SystemConfig;
   readonly ragEngines?: RagEngines;
   readonly userPool: cognito.UserPool;
-  readonly llmsParameter: ssm.StringParameter;
-  readonly llms: SageMakerLLMEndpoint[];
+  readonly modelsParameter: ssm.StringParameter;
+  readonly models: SageMakerModelEndpoint[];
 }
 
 export class ChatBotApi extends Construct {

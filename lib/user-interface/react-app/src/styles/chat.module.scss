@@ -30,6 +30,7 @@
   color: awsui.$color-text-body-default;
   font-size: 3rem;
   font-weight: bolder;
+  opacity: 0.4;
 }
 
 .input_container {
@@ -92,6 +93,11 @@
   .input_controls_right {
     justify-self: end;
   }
+}
+
+.btn_copy {
+  float: right;
+  margin-top: -20px;
 }
 
 @media (max-width: 689px) {

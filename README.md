@@ -52,10 +52,10 @@ The solution comes with several debugging tools to help you debug RAG scenarios:
 
 
 ## Full-fledged User Interface
-The repository includes a CDK construct to deploy  a **full-fledged UI** built with [React](https://react.dev/) to interact with the deployed LLMs as chatbots. Hosted on [Amazon S3](https://aws.amazon.com/s3/) and distributed with [Amazon CloudFront](https://aws.amazon.com/cloudfront/). 
+The repository includes a CDK construct to deploy  a **full-fledged UI** built with [React](https://react.dev/) to interact with the deployed LLMs/VLMs as chatbots. Hosted on [Amazon S3](https://aws.amazon.com/s3/) and distributed with [Amazon CloudFront](https://aws.amazon.com/cloudfront/). 
 
 
-Protected with [Amazon Cognito Authentication](https://aws.amazon.com/cognito/) to help you interact and experiment with multiple LLMs, multiple RAG engines, conversational history support and document upload/progress.
+Protected with [Amazon Cognito Authentication](https://aws.amazon.com/cognito/) to help you interact and experiment with multiple LLMs/VLMs, multiple RAG engines, conversational history support and document upload/progress.
 
 
 The interface layer between the UI and backend is built with [API Gateway REST API](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-rest-api.html) for management requests and [Amazon API Gateway WebSocket APIs](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-websocket-api.html) for chatbot messages and responses.
@@ -68,7 +68,7 @@ Design system provided by [AWS Cloudscape Design System](https://cloudscape.desi
 
 Before you begin using the solution, there are certain precautions you must take into account:
 
-- **Cost Management with self-hosted models on SageMaker**: Be mindful of the costs associated with AWS resources, especially with SageMaker models billed by the hour. While the sample is designed to be cost-effective, leaving serverful resources running for extended periods or deploying numerous LLMs can quickly lead to increased costs.
+- **Cost Management with self-hosted models on SageMaker**: Be mindful of the costs associated with AWS resources, especially with SageMaker models billed by the hour. While the sample is designed to be cost-effective, leaving serverful resources running for extended periods or deploying numerous LLMs/VLMs can quickly lead to increased costs.
 
 - **Licensing obligations**: If you choose to use any datasets or models alongside the provided samples, ensure you check the LLM code and comply with all licensing obligations attached to them.
 
@@ -206,7 +206,7 @@ npm install && npm run build
 npm run create
 ```
 You'll be prompted to configure the different aspects of the solution, such as: 
-- The LLMs to enable (we support all models provided by Bedrock, FalconLite, LLama 2 and more to come)
+- The LLMs or VLMs to enable (we support all models provided by Bedrock, FalconLite, LLama 2 and more to come)
 - Setup of the RAG system: engine selection (i.e. Aurora w/ pgvector, OpenSearch, Kendra..) embeddings selection and more to come.
 
 When done, answer `Y` to create a new configuration.

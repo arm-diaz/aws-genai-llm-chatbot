@@ -1,6 +1,7 @@
 import {
   SupportedRegion,
   SupportedSageMakerLLM,
+  SupportedSageMakerVLM,
   SystemConfig,
 } from "../lib/shared/types";
 import { existsSync, readFileSync } from "fs";
@@ -23,6 +24,10 @@ export function getConfig(): SystemConfig {
     },
     llms: {
       // sagemaker: [SupportedSageMakerLLM.FalconLite]
+      sagemaker: [],
+    },
+    vlms: {
+      // sagemaker: [SupportedSageMakerVLM.Idefics_9b]
       sagemaker: [],
     },
     rag: {

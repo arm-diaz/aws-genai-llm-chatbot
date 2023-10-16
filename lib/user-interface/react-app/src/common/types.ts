@@ -49,6 +49,8 @@ export interface ApiErrorResult {
 export type LoadingStatus = "pending" | "loading" | "finished" | "error";
 export type ModelProvider = "sagemaker" | "bedrock" | "openai";
 export type RagDocumentType = "file" | "text" | "qna" | "website";
+export type Modality = "TEXT" | "IMAGE";
+export type ModelInterface = "langchain" | "idefics";
 
 export interface WorkspaceItem {
   id: string;
@@ -95,11 +97,14 @@ export interface CrossEncoderModelItem {
   default?: boolean;
 }
 
-export interface LLMItem {
+export interface ModelItem {
   provider: ModelProvider;
   name: string;
   streaming: boolean;
-  type: string;
+  inputModalities: Modality[];
+  outputModalities: Modality[];
+  interface: ModelInterface;
+  ragSupported: boolean;
 }
 
 export interface SessionItem {
