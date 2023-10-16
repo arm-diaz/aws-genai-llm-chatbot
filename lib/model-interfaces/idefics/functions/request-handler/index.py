@@ -32,6 +32,7 @@ def send_to_client(detail):
         Message=json.dumps(detail),
     )
 
+
 def handle_run(record):
     connection_id = record["connectionId"]
     user_id = record["userId"]
