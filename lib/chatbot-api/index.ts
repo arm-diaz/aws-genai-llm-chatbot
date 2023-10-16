@@ -4,6 +4,7 @@ import { SageMakerModelEndpoint, SystemConfig } from "../shared/types";
 import { RestApi } from "./rest-api";
 import { WebSocketApi } from "./websocket-api";
 import { ChatBotDynamoDBTables } from "./chatbot-dynamodb-tables";
+import { ChatBotS3Buckets } from "./chatbot-s3-buckets";
 import { RagEngines } from "../rag-engines";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as cognito from "aws-cdk-lib/aws-cognito";
@@ -11,6 +12,7 @@ import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as apigwv2 from "@aws-cdk/aws-apigatewayv2-alpha";
 import * as sns from "aws-cdk-lib/aws-sns";
 import * as ssm from "aws-cdk-lib/aws-ssm";
+import * as s3 from "aws-cdk-lib/aws-s3";
 
 export interface ChatBotApiProps {
   readonly shared: Shared;
@@ -27,11 +29,13 @@ export class ChatBotApi extends Construct {
   public readonly messagesTopic: sns.Topic;
   public readonly sessionsTable: dynamodb.Table;
   public readonly byUserIdIndex: string;
+  public readonly attachmentsBucket: s3.Bucket;
 
   constructor(scope: Construct, id: string, props: ChatBotApiProps) {
     super(scope, id);
 
     const chatTables = new ChatBotDynamoDBTables(this, "ChatDynamoDBTables");
+    const chatBuckets = new ChatBotS3Buckets(this, "ChatBuckets");
 
     const restApi = new RestApi(this, "RestApi", {
       ...props,
@@ -46,5 +50,6 @@ export class ChatBotApi extends Construct {
     this.messagesTopic = webSocketApi.messagesTopic;
     this.sessionsTable = chatTables.sessionsTable;
     this.byUserIdIndex = chatTables.byUserIdIndex;
+    this.attachmentsBucket = chatBuckets.attachmentsBucket;
   }
 }

@@ -13,14 +13,18 @@ import * as s3 from "aws-cdk-lib/aws-s3";
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as apigwv2 from "@aws-cdk/aws-apigatewayv2-alpha";
+import * as cognitoIdentityPool from "@aws-cdk/aws-cognito-identitypool-alpha";
+import * as iam from "aws-cdk-lib/aws-iam";
 
 export interface UserInterfaceProps {
   readonly config: SystemConfig;
   readonly shared: Shared;
   readonly userPoolId: string;
   readonly userPoolClientId: string;
+  readonly identityPool: cognitoIdentityPool.IdentityPool;
   readonly restApi: apigateway.RestApi;
   readonly webSocketApi: apigwv2.WebSocketApi;
+  readonly attachmentsBucket: s3.Bucket;
 }
 
 export class UserInterface extends Construct {
@@ -40,6 +44,7 @@ export class UserInterface extends Construct {
 
     const originAccessIdentity = new cf.OriginAccessIdentity(this, "S3OAI");
     websiteBucket.grantRead(originAccessIdentity);
+    props.attachmentsBucket.grantRead(originAccessIdentity);
 
     const distribution = new cf.CloudFrontWebDistribution(
       this,
@@ -113,6 +118,32 @@ export class UserInterface extends Construct {
               },
             },
           },
+          {
+            behaviors: [
+              {
+                pathPattern: "/chabot/files/*",
+                allowedMethods: cf.CloudFrontAllowedMethods.ALL,
+                viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                defaultTtl: cdk.Duration.seconds(0),
+                forwardedValues: {
+                  queryString: true,
+                  headers: [
+                    "Referer",
+                    "Origin",
+                    "Authorization",
+                    "Content-Type",
+                    "x-forwarded-user",
+                    "Access-Control-Request-Headers",
+                    "Access-Control-Request-Method",
+                  ],
+                },
+              },
+            ],
+            s3OriginSource: {
+              s3BucketSource: props.attachmentsBucket,
+              originAccessIdentity,
+            },
+          },
         ],
         errorConfigurations: [
           {
@@ -130,6 +161,13 @@ export class UserInterface extends Construct {
       aws_cognito_region: cdk.Aws.REGION,
       aws_user_pools_id: props.userPoolId,
       aws_user_pools_web_client_id: props.userPoolClientId,
+      aws_cognito_identity_pool_id: props.identityPool.identityPoolId,
+      Storage: {
+        AWSS3: {
+          bucket: props.attachmentsBucket.bucketName,
+          region: cdk.Aws.REGION,
+        },
+      },
       config: {
         api_endpoint: `https://${distribution.distributionDomainName}/api`,
         websocket_endpoint: `wss://${distribution.distributionDomainName}/socket`,
@@ -139,6 +177,59 @@ export class UserInterface extends Construct {
           props.config
         ),
       },
+    });
+
+    // Allow authenticated web users to read upload data to the attachments bucket for their chat files
+    // ref: https://docs.amplify.aws/lib/storage/getting-started/q/platform/js/#using-amazon-s3
+    props.identityPool.authenticatedRole.addToPrincipalPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+        resources: [
+          `${props.attachmentsBucket.bucketArn}/public/*`,
+          `${props.attachmentsBucket.bucketArn}/protected/\${cognito-identity.amazonaws.com:sub}/*`,
+          `${props.attachmentsBucket.bucketArn}/private/\${cognito-identity.amazonaws.com:sub}/*`,
+        ],
+      })
+    );
+    props.identityPool.authenticatedRole.addToPrincipalPolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ["s3:ListBucket"],
+        resources: [`${props.attachmentsBucket.bucketArn}`],
+        conditions: {
+          StringLike: {
+            "s3:prefix": [
+              "public/",
+              "public/*",
+              "protected/",
+              "protected/*",
+              "private/${cognito-identity.amazonaws.com:sub}/",
+              "private/${cognito-identity.amazonaws.com:sub}/*",
+            ],
+          },
+        },
+      })
+    );
+
+    // Enable CORS for the attachments bucket to allow uploads from the user interface
+    // ref: https://docs.amplify.aws/lib/storage/getting-started/q/platform/js/#amazon-s3-bucket-cors-policy-setup
+    props.attachmentsBucket.addCorsRule({
+      allowedMethods: [
+        s3.HttpMethods.GET,
+        s3.HttpMethods.PUT,
+        s3.HttpMethods.POST,
+        s3.HttpMethods.DELETE,
+      ],
+      allowedOrigins: ['*'],
+      allowedHeaders: ["*"],
+      exposedHeaders: [
+        "x-amz-server-side-encryption",
+        "x-amz-request-id",
+        "x-amz-id-2",
+        "ETag",
+      ],
+      maxAge: 3000,
     });
 
     const asset = s3deploy.Source.asset(appPath, {

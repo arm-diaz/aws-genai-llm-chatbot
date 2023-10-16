@@ -6,10 +6,13 @@ import {
   Input,
   Modal,
   SpaceBetween,
+  Spinner,
+  FileUpload,
 } from "@cloudscape-design/components";
 import { useForm } from "../../common/hooks/use-form";
 import { ChatBotConfiguration } from "./types";
-import { Dispatch } from "react";
+import { Dispatch, useEffect, useState } from "react";
+import { Storage } from "aws-amplify";
 
 export interface ImageDialogProps {
   sessionId: string;
@@ -20,7 +23,15 @@ export interface ImageDialogProps {
 }
 
 export default function ImageDialog(props: ImageDialogProps) {
-  const { data, onChange, errors, validate } = useForm({
+  const [files, setFiles] = useState<File[]>([] as File[]);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [disableFileUpload, setDisableFileUpload] = useState<boolean>(false);
+  const [disableUrl, setDisableUrl] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  
+
+  const { onChange, errors, validate } = useForm({
     initialValue: () => {
       const retValue = {
         ...props.configuration,
@@ -41,7 +52,7 @@ export default function ImageDialog(props: ImageDialogProps) {
 
     props.setConfiguration({
       ...props.configuration,
-      ...data,
+      imageUrl: fileUrl,
     });
 
     props.setVisible(false);
@@ -55,6 +66,45 @@ export default function ImageDialog(props: ImageDialogProps) {
 
     props.setVisible(false);
   };
+
+  useEffect(() => {
+    if (files.length === 0) {
+      setDisableUrl(false);
+      return;
+    }
+    setLoading(true);
+    setDisableUrl(true);
+    const file: File = files[0];
+    const uploadFile = async () => {
+      console.log(file);
+      try {
+        const url = await Storage.put(file.name, file, {
+          level: "public",
+        });
+        const signedUrl = await Storage.get(url.key, { level: "public" });
+        setFileUrl(signedUrl);
+      } catch (error) {
+        const errorMessage = "Error uploading file: " + error;
+        console.log(errorMessage);
+        setError(errorMessage);
+        setDisableUrl(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    uploadFile();
+  }, [files]);
+  
+
+  useEffect(() => {
+    if (fileUrl) {
+      setDisableFileUpload(true);
+    } else {
+      setDisableFileUpload(false);
+    }
+  }
+  , [fileUrl]);
 
   return (
     <Modal
@@ -77,19 +127,66 @@ export default function ImageDialog(props: ImageDialogProps) {
       <Form>
         <SpaceBetween size="m">
           <FormField
-            label="Image URL"
+            label="URL"
             errorText={errors.imageUrl}
             description="You can set the URL of the image to be used for this conversation."
           >
             <Input
-              value={data.imageUrl || ""}
+              type="url"
+              value={fileUrl as string}
+              disabled={disableUrl}
               onChange={({ detail: { value } }) => {
-                onChange({ imageUrl: value });
+                setFileUrl(value);
               }}
             />
           </FormField>
-          {data.imageUrl && (
-            <img src={data.imageUrl} style={{ width: "100px" }} />
+          <FormField
+            label="Upload from device"
+            errorText={errors.filesUrl}
+            description="You can upload an image to be used for this conversation."
+          >
+            {!disableFileUpload && (
+            <FileUpload
+              onChange={({ detail }) => {
+                setFiles(detail.value)
+                setFileUrl(null);
+              }}
+              value={files}
+              i18nStrings={{
+                uploadButtonText: (e) => (e ? "Choose files" : "Choose file"),
+                dropzoneText: (e) =>
+                  e ? "Drop files to upload" : "Drop file to upload",
+                removeFileAriaLabel: (e) => `Remove file ${e + 1}`,
+                limitShowFewer: "Show fewer files",
+                limitShowMore: "Show more files",
+                errorIconAriaLabel: "Error",
+              }}
+              
+              errorText={error}
+              showFileThumbnail
+              tokenLimit={3}
+              constraintText=".png, .jpg, .jpeg"
+            />
+            )}
+            {disableFileUpload && (
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setFileUrl(null);
+                  setFiles([]);
+                  setDisableFileUpload(false);
+                }}
+              >
+                Upload a file
+              </Button>
+            )}
+
+          </FormField>
+          {loading && (
+          <Spinner />
+          )}
+          {fileUrl && (
+            <img src={fileUrl} style={{ width: "100px" }} />
           )}
         </SpaceBetween>
       </Form>

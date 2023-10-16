@@ -146,8 +146,10 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
       config: props.config,
       userPoolId: authentication.userPool.userPoolId,
       userPoolClientId: authentication.userPoolClient.userPoolClientId,
+      identityPool: authentication.identityPool,
       restApi: chatBotApi.restApi,
       webSocketApi: chatBotApi.webSocketApi,
+      attachmentsBucket: chatBotApi.attachmentsBucket,
     });
   }
 }
