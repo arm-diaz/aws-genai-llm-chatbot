@@ -11,6 +11,8 @@ from aws_lambda_powertools.utilities.batch.exceptions import BatchProcessingErro
 from aws_lambda_powertools.utilities.data_classes.sqs_event import SQSRecord
 from aws_lambda_powertools.utilities.typing import LambdaContext
 
+from chat_message_history import DynamoDBChatMessageHistory
+
 from sagemaker.huggingface import HuggingFacePredictor
 
 processor = BatchProcessor(event_type=EventType.SQS)
@@ -41,14 +43,21 @@ def handle_run(record):
     mode = data["mode"]
     model_kwargs = data.get("modelKwargs", {})
     prompt = data["text"]
+    session_id = data.get("sessionId")
     imageUrl = data.get(
         "imageUrl",
     )
-    workspace_id = data.get("workspaceId", None)
-    session_id = data.get("sessionId")
 
     if not session_id:
         session_id = str(uuid.uuid4())
+
+    chat_history = DynamoDBChatMessageHistory(
+        table_name=os.environ["SESSIONS_TABLE_NAME"],
+        session_id=session_id,
+        user_id=user_id,
+    )
+
+    messages = chat_history.messages
 
     params = {
         "do_sample": True,
@@ -70,13 +79,49 @@ def handle_run(record):
     vlm = HuggingFacePredictor(
         endpoint_name=model_id,
     )
-    prompt_template = f"User:{prompt}![]({imageUrl})<end_of_utterance>\nAssistant:"
+
+    print("messages")
+    print(messages)
+    human_prompt_template = "User:{prompt}![]({imageUrl})"
+    ai_prompt_template = "Assistant:{prompt}"
+
+    prompts = []
+    for message in messages:
+        print(dir(message))
+        print(message.type)
+        print(message.content)
+        print(message.additional_kwargs)
+        if message.type == "human":
+            prompts.append(
+                human_prompt_template.format(prompt=message.content, imageUrl="")
+            )
+        if message.type == "ai":
+            prompts.append(ai_prompt_template.format(prompt=message.content))
+
+    prompts.append(human_prompt_template.format(prompt=prompt, imageUrl=imageUrl))
+    prompts.append("<end_of_utterance>\nAssistant:")
+    print(prompts)
+
+    prompt_template = "\n".join(prompts)
     chat = vlm.predict({"inputs": prompt_template, "parameters": params})
+    response = chat[0]["generated_text"][len(prompt_template) :].strip()
+    metadata = {
+        "modelId": model_id,
+        "modelKwargs": model_kwargs,
+        "mode": mode,
+        "sessionId": session_id,
+        "userId": user_id,
+        "imageUrl": imageUrl,
+    }
+
+    chat_history.add_user_message(prompt)
+    chat_history.add_metadata(metadata)
+    chat_history.add_ai_message(response)
 
     response = {
         "sessionId": session_id,
         "type": "text",
-        "content": chat[0]["generated_text"][len(prompt_template) :].strip(),
+        "content": response,
     }
 
     send_to_client(
