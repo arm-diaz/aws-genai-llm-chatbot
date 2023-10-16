@@ -25,6 +25,7 @@ export default function ImageDialog(props: ImageDialogProps) {
       const retValue = {
         ...props.configuration,
         imageUrl: props.configuration.imageUrl,
+        filesUrl: null,
       };
 
       return retValue;

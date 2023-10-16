@@ -236,6 +236,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         mode: ChatBotMode.Chain,
         text: value,
         imageUrl: props.configuration.imageUrl || null,
+        filesUrl: [],
         modelName: name,
         provider: provider,
         sessionId: props.session.id,
@@ -254,6 +255,11 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       value: "",
     }));
 
+    props.setConfiguration({
+      ...props.configuration,
+      imageUrl: null,
+    });
+
     props.setRunning(true);
 
     props.setMessageHistory((prev) =>
@@ -261,7 +267,9 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         {
           type: ChatBotMessageType.Human,
           content: value,
-          metadata: {},
+          metadata: {
+            ...props.configuration,
+          },
         },
         {
           type: ChatBotMessageType.AI,

@@ -49,7 +49,7 @@ export default function ChatMessage(props: ChatMessageProps) {
             ) : null}
             <ReactMarkdown children={props.message.content} />
             {props.message.content.length > 0 ? (
-              <div className={styles.btn_copy}>
+              <div className={styles.btn_chabot_message_copy}>
                 <Popover
                   size="medium"
                   position="top"
@@ -76,11 +76,11 @@ export default function ChatMessage(props: ChatMessageProps) {
       )}
       {props.message?.type === ChatBotMessageType.Human && (
         <>
-          {props.configuration.imageUrl &&
+          {props.message.metadata.imageUrl &&
             props.message?.type === ChatBotMessageType.Human && (
               <img
-                src={props.configuration.imageUrl}
-                style={{ maxWidth: "30%", borderRadius: "4px" }}
+                src={props.message.metadata.imageUrl as string}
+                className={styles.img_chabot_message}
               />
             )}
           <TextContent>

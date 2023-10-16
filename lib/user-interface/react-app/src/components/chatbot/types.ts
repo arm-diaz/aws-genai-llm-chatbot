@@ -49,7 +49,8 @@ export interface ChatBotRunRequest {
     modelName: string;
     provider: string;
     sessionId?: string;
-    imageUrl: string | null;
+    imageUrl: string | null | undefined;
+    filesUrl: null | string[]; 
     text: string;
     mode: string;
     workspaceId?: string;
@@ -66,7 +67,7 @@ export interface ChatBotToken {
 export interface ChatBotHistoryItem {
   type: ChatBotMessageType;
   content: string;
-  metadata: Record<string, string | boolean | number>;
+  metadata: Record<string, string | boolean | number | null | undefined>;
   tokens?: ChatBotToken[];
 }
 
@@ -76,7 +77,7 @@ export interface ChatBotMessageResponse {
     sessionId: string;
     token?: ChatBotToken;
     content?: string;
-    metadata: Record<string, string | boolean | number>;
+    metadata: Record<string, string | boolean | number | null | undefined>;
   };
 }
 
@@ -88,4 +89,5 @@ export enum ChabotInputModality {
 export enum ChabotOutputModality {
   Text = "TEXT",
   Image = "IMAGE",
+  Embedding = "EMBEDDING",
 }
