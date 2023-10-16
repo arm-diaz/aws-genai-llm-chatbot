@@ -85,7 +85,7 @@ export enum ChabotInputModality {
   Image = "IMAGE",
 }
 
-export enum ChabotOutputModalities {
+export enum ChabotOutputModality {
   Text = "TEXT",
   Image = "IMAGE",
 }

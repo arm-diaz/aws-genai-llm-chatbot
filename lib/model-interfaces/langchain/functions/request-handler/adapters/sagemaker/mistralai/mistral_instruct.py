@@ -18,6 +18,7 @@ class MistralInstructContentHandler(LLMContentHandler):
                 "inputs": prompt,
                 "parameters": {
                     "do_sample": True,
+                    "max_new_tokens": model_kwargs.get("max_new_tokens", 512),
                     "top_p": model_kwargs.get("top_p", 0.9),
                     "temperature": model_kwargs.get("temperature", 0.6),
                     "return_full_text": False,

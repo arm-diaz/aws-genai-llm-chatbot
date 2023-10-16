@@ -19,7 +19,6 @@ logger = Logger()
 
 AWS_REGION = os.environ["AWS_REGION"]
 MESSAGES_TOPIC_ARN = os.environ["MESSAGES_TOPIC_ARN"]
-API_KEYS_SECRETS_ARN = os.environ["API_KEYS_SECRETS_ARN"]
 
 sns = boto3.client("sns", region_name=AWS_REGION)
 
@@ -137,10 +136,6 @@ def handle_failed_records(records):
 @tracer.capture_lambda_handler
 def handler(event, context: LambdaContext):
     batch = event["Records"]
-
-    api_keys = parameters.get_secret(API_KEYS_SECRETS_ARN, transform="json")
-    for key in api_keys:
-        os.environ[key] = api_keys[key]
 
     try:
         with processor(records=batch, handler=record_handler):
