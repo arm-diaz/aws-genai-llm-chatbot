@@ -61,7 +61,7 @@ const embeddingModels = [
       options.bedrockRegion = config.bedrock?.region;
       options.bedrockEndpoint = config.bedrock?.endpointUrl;
       options.bedrockRoleArn = config.bedrock?.roleArn;
-      options.sagemakerModels = config.models?.sagemaker;
+      options.sagemakerModels = config.llms?.sagemaker;
       options.enableRag = config.rag.enabled;
       options.ragsToEnable = Object.keys(config.rag.engines).filter(
         (v: string) => (config.rag.engines as any)[v].enabled
@@ -157,7 +157,7 @@ async function processCreateOptions(options: any): Promise<void> {
       type: "multiselect",
       name: "sagemakerModels",
       message:
-        "Which Sagemaker Models do you want to enable (enter for None, space to select)",
+        "Which SageMaker Models do you want to enable (enter for None, space to select)",
       choices: Object.values(SupportedSageMakerModels),
       initial: options.sagemakerModels || [],
     },
@@ -302,7 +302,7 @@ async function processCreateOptions(options: any): Promise<void> {
           endpointUrl: answers.bedrockEndpoint,
         }
       : undefined,
-    models: {
+    llms: {
       sagemaker: answers.sagemakerModels,
     },
     rag: {

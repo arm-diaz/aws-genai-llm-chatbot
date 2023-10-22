@@ -71,7 +71,7 @@ export interface SystemConfig {
     endpointUrl?: string;
     roleArn?: string;
   };
-  models: {
+  llms: {
     sagemaker: SupportedSageMakerModels[];
   };
   rag: {
