@@ -206,7 +206,7 @@ npm install && npm run build
 npm run create
 ```
 You'll be prompted to configure the different aspects of the solution, such as: 
-- The LLMs or MLMs to enable (we support all models provided by Bedrock, FalconLite, LLama 2 and more to come)
+- The LLMs or MLMs to enable (we support all models provided by Bedrock along with SageMaker hosted Idefics, FalconLite, Mistral and more to come)
 - Setup of the RAG system: engine selection (i.e. Aurora w/ pgvector, OpenSearch, Kendra..) embeddings selection and more to come.
 
 When done, answer `Y` to create a new configuration.
