@@ -11,8 +11,7 @@ import {
   Modality,
   ModelInterface,
   SageMakerModelEndpoint,
-  SupportedSageMakerLLM,
-  SupportedSageMakerVLM,
+  SupportedSageMakerModels,
   SystemConfig,
 } from "../shared/types";
 
@@ -31,7 +30,7 @@ export class Models extends Construct {
     const models: SageMakerModelEndpoint[] = [];
 
     if (
-      props.config.llms?.sagemaker.includes(SupportedSageMakerLLM.FalconLite)
+      props.config.models?.sagemaker.includes(SupportedSageMakerModels.FalconLite)
     ) {
       const falconLite = new SageMakerModel(this, "FalconLite", {
         vpc: props.shared.vpc,
@@ -70,7 +69,7 @@ export class Models extends Construct {
     }
 
     if (
-      props.config.llms?.sagemaker.includes(SupportedSageMakerLLM.Mistral7b)
+      props.config.models?.sagemaker.includes(SupportedSageMakerModels.Mistral7b)
     ) {
       const mistral7b = new SageMakerModel(this, "Mistral7B", {
         vpc: props.shared.vpc,
@@ -101,8 +100,8 @@ export class Models extends Construct {
     }
 
     if (
-      props.config.llms?.sagemaker.includes(
-        SupportedSageMakerLLM.Mistral7b_Instruct
+      props.config.models?.sagemaker.includes(
+        SupportedSageMakerModels.Mistral7b_Instruct
       )
     ) {
       const mistral7bInstruct = new SageMakerModel(this, "Mistral7BInstruct", {
@@ -142,8 +141,8 @@ export class Models extends Construct {
     //      print(model.model_package_arn)
 
     if (
-      props.config.llms?.sagemaker.includes(
-        SupportedSageMakerLLM.Llama2_13b_Base
+      props.config.models?.sagemaker.includes(
+        SupportedSageMakerModels.Llama2_13b_Base
       )
     ) {
       const llama2base = new SageMakerModel(this, "LLamaV2_13B_Base", {
@@ -201,8 +200,8 @@ export class Models extends Construct {
     //      model = JumpStartModel(model_id=model_id, region=region)
     //      print(model.model_package_arn)
     if (
-      props.config.llms.sagemaker.includes(
-        SupportedSageMakerLLM.Llama2_13b_Chat
+      props.config.models?.sagemaker.includes(
+        SupportedSageMakerModels.Llama2_13b_Chat
       )
     ) {
       const llama2chat = new SageMakerModel(this, "LLamaV2_13B_Chat", {
@@ -251,7 +250,7 @@ export class Models extends Construct {
     }
 
     if (
-      props.config.vlms?.sagemaker.includes(SupportedSageMakerVLM.Idefics_9b)
+      props.config.models?.sagemaker.includes(SupportedSageMakerModels.Idefics_9b)
     ) {
       const idefics9b = new SageMakerModel(this, "IDEFICS9B", {
         vpc: props.shared.vpc,
@@ -283,7 +282,7 @@ export class Models extends Construct {
     }
 
     if (
-      props.config.vlms?.sagemaker.includes(SupportedSageMakerVLM.Idefics_80b)
+      props.config.models?.sagemaker.includes(SupportedSageMakerModels.Idefics_80b)
     ) {
       const idefics80b = new SageMakerModel(this, "IDEFICS80B", {
         vpc: props.shared.vpc,

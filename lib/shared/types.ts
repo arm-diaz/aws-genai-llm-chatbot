@@ -2,17 +2,14 @@ import * as sagemaker from "aws-cdk-lib/aws-sagemaker";
 
 export type ModelProvider = "sagemaker" | "bedrock" | "openai";
 
-export enum SupportedSageMakerLLM {
+export enum SupportedSageMakerModels {
   FalconLite = "FalconLite",
   Llama2_13b_Chat = "Llama2_13b_Chat",
   Llama2_13b_Base = "Llama2_13b_Base",
   Mistral7b = "Mistral7b",
   Mistral7b_Instruct = "Mistral7b_Instruct",
-}
-
-export enum SupportedSageMakerVLM {
-  Idefics_9b = "Idefics_9b",
-  Idefics_80b = "Idefics_80b",
+  Idefics_9b = "Idefics_9b (Multimodal)",
+  Idefics_80b = "Idefics_80b (Multimodal)",
 }
 
 export enum SupportedRegion {
@@ -74,11 +71,8 @@ export interface SystemConfig {
     endpointUrl?: string;
     roleArn?: string;
   };
-  llms: {
-    sagemaker: SupportedSageMakerLLM[];
-  };
-  vlms: {
-    sagemaker: SupportedSageMakerVLM[];
+  models: {
+    sagemaker: SupportedSageMakerModels[];
   };
   rag: {
     enabled: boolean;

@@ -145,7 +145,7 @@ export default function Welcome() {
                   Cognito Authentication
                 </Link>{" "}
                 to help you interact and experiment with{" "}
-                <strong>multiple LLMs and VLMs</strong>,{" "}
+                <strong>multiple Models</strong>,{" "}
                 <strong>multiple RAG sources</strong>,{" "}
                 <strong>conversational history support</strong> and{" "}
                 <strong>documents upload</strong>.

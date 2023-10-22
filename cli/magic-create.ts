@@ -7,8 +7,7 @@ import { Command } from "commander";
 import * as enquirer from "enquirer";
 import {
   SupportedRegion,
-  SupportedSageMakerLLM,
-  SupportedSageMakerVLM,
+  SupportedSageMakerModels,
   SystemConfig,
 } from "../lib/shared/types";
 import { LIB_VERSION } from "./version.js";
@@ -62,8 +61,7 @@ const embeddingModels = [
       options.bedrockRegion = config.bedrock?.region;
       options.bedrockEndpoint = config.bedrock?.endpointUrl;
       options.bedrockRoleArn = config.bedrock?.roleArn;
-      options.sagemakerLLMs = config.llms.sagemaker;
-      options.sagemakerVLMs = config.vlms.sagemaker;
+      options.sagemakerModels = config.models?.sagemaker;
       options.enableRag = config.rag.enabled;
       options.ragsToEnable = Object.keys(config.rag.engines).filter(
         (v: string) => (config.rag.engines as any)[v].enabled
@@ -157,19 +155,11 @@ async function processCreateOptions(options: any): Promise<void> {
     },
     {
       type: "multiselect",
-      name: "sagemakerLLMs",
+      name: "sagemakerModels",
       message:
-        "Which Sagemaker Large Langugage Models do you want to enable (enter for None, space to select)",
-      choices: Object.values(SupportedSageMakerLLM),
-      initial: options.sagemakerLLMs || [],
-    },
-    {
-      type: "multiselect",
-      name: "sagemakerVLMs",
-      message:
-        "Which Sagemaker Visual Language Models do you want to enable (enter for None, space to select)",
-      choices: Object.values(SupportedSageMakerVLM),
-      initial: options.sagemakerVLMs || [],
+        "Which Sagemaker Models do you want to enable (enter for None, space to select)",
+      choices: Object.values(SupportedSageMakerModels),
+      initial: options.sagemakerModels || [],
     },
     {
       type: "confirm",
@@ -312,11 +302,8 @@ async function processCreateOptions(options: any): Promise<void> {
           endpointUrl: answers.bedrockEndpoint,
         }
       : undefined,
-    llms: {
-      sagemaker: answers.sagemakerLLMs,
-    },
-    vlms: {
-      sagemaker: answers.sagemakerVLMs,
+    models: {
+      sagemaker: answers.sagemakerModels,
     },
     rag: {
       enabled: answers.enableRag,
