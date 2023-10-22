@@ -21,7 +21,7 @@ export function getConfig(): SystemConfig {
       endpointUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
     },
     llms: {
-      // i.e. sagemaker: [SupportedSageMakerModels.FalconLite]
+      // sagemaker: [SupportedSageMakerModels.FalconLite]
       sagemaker: [],
     },
     rag: {
