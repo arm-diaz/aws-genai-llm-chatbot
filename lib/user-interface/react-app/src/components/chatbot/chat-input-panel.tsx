@@ -235,8 +235,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       data: {
         mode: ChatBotMode.Chain,
         text: value,
-        imageUrl: props.configuration.imageUrl || null,
-        filesUrl: [],
+        files: props.configuration.files || null,
         modelName: name,
         provider: provider,
         sessionId: props.session.id,
@@ -257,7 +256,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
 
     props.setConfiguration({
       ...props.configuration,
-      imageUrl: null,
+      files: null,
     });
 
     props.setRunning(true);
@@ -354,10 +353,8 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
           </span>
           <TextareaAutosize
             className={styles.input_textarea}
-            style={{ width: "100%" }}
             maxRows={6}
             minRows={1}
-            maxLength={10000}
             spellCheck={true}
             autoFocus
             onChange={(e) =>
@@ -376,10 +373,11 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             {state.selectedModelMetadata?.inputModalities.includes(
               ChabotInputModality.Image
             ) &&
-              props.configuration.imageUrl && (
+              props.configuration.files?.map((file, idx) => (
                 <img
+                  key={idx}
                   onClick={() => setImageDialogVisible(true)}
-                  src={props.configuration.imageUrl}
+                  src={file.url}
                   style={{
                     borderRadius: "4px",
                     cursor: "pointer",
@@ -388,7 +386,8 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                     marginRight: "8px",
                   }}
                 />
-              )}
+              ))
+            }
             <Button
               disabled={
                 readyState !== ReadyState.OPEN ||

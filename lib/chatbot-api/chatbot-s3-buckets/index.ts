@@ -3,12 +3,12 @@ import { Construct } from "constructs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 
 export class ChatBotS3Buckets extends Construct {
-  public readonly attachmentsBucket: s3.Bucket;
+  public readonly filesBucket: s3.Bucket;
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
 
-    const attachmentsBucket = new s3.Bucket(this, "AttachmentsBucket", {
+    const filesBucket = new s3.Bucket(this, "FilesBucket", {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
@@ -29,6 +29,6 @@ export class ChatBotS3Buckets extends Construct {
       ],
     });
 
-    this.attachmentsBucket = attachmentsBucket;
+    this.filesBucket = filesBucket;
   }
 }

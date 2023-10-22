@@ -42,3 +42,12 @@ class Modality(Enum):
 class ModelInterface(Enum):
     LANGCHIAN = "langchain"
     IDEFICS = "idefics"
+
+
+class Direction(Enum):
+    IN = "IN"
+    OUT = "OUT"
+
+
+class ChatbotAction(Enum):
+    FINAL_RESPONSE = "final_response"

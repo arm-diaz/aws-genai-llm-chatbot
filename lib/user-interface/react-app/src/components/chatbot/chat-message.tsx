@@ -57,7 +57,7 @@ export default function ChatMessage(props: ChatMessageProps) {
                   dismissButton={false}
                   content={
                     <StatusIndicator type="success">
-                      Answer copied to clipboard
+                      Copied to clipboard
                     </StatusIndicator>
                   }
                 >
@@ -76,10 +76,10 @@ export default function ChatMessage(props: ChatMessageProps) {
       )}
       {props.message?.type === ChatBotMessageType.Human && (
         <>
-          {props.message.metadata.imageUrl &&
+          {props.message.metadata?.imageUrl &&
             props.message?.type === ChatBotMessageType.Human && (
               <img
-                src={props.message.metadata.imageUrl as string}
+                src={props.message.metadata?.imageUrl as string}
                 className={styles.img_chabot_message}
               />
             )}

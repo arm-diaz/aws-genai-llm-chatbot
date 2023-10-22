@@ -3,15 +3,15 @@ import {
   Button,
   Form,
   FormField,
-  Input,
   Modal,
   SpaceBetween,
   Spinner,
   FileUpload,
 } from "@cloudscape-design/components";
 import { useForm } from "../../common/hooks/use-form";
-import { ChatBotConfiguration } from "./types";
-import { Dispatch, useEffect, useState } from "react";
+
+import { ChatBotConfiguration, FileStorageProvider, ImageFile } from "./types";
+import { Dispatch, useState } from "react";
 import { Storage } from "aws-amplify";
 import { v4 as uuidv4 } from "uuid";
 
@@ -23,114 +23,116 @@ export interface ImageDialogProps {
   setConfiguration: Dispatch<React.SetStateAction<ChatBotConfiguration>>;
 }
 
-export default function ImageDialog(props: ImageDialogProps) {
-  const [files, setFiles] = useState<File[]>([] as File[]);
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [disableFileUpload, setDisableFileUpload] = useState<boolean>(false);
-  const [disableUrl, setDisableUrl] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
+const ALLOWED_MIME_TYPES = ["image/png", "image/jpg", "image/jpeg"];
 
-  const { onChange, errors, validate } = useForm({
+export default function ImageDialog(props: ImageDialogProps) {
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [files, setFiles] = useState<File[]>([] as File[]);
+
+  const { data, onChange, errors, validate } = useForm({
     initialValue: () => {
       const retValue = {
         ...props.configuration,
-        imageUrl: props.configuration.imageUrl,
-        filesUrl: null,
+        files: [] as File[],
       };
 
       return retValue;
     },
-    validate: () => {
+    validate: (form) => {
       const errors: Record<string, string | string[]> = {};
+      console.log(form);
+      if (!form.files || form.files.length === 0) {
+        errors.files = "Please upload a file";
+        return errors;
+      }
+
+      if (!validateFiles(form.files)) {
+        errors.files = "Files validation failed";
+        return errors;
+      }
+      console.log(errors);
       return errors;
     },
   });
 
-  const saveConfig = () => {
+  const saveConfig = async () => {
     if (!validate()) return;
+    setLoading(true);
+
+    const files: ImageFile[] = (await uploadFiles(data.files)) as ImageFile[];
 
     props.setConfiguration({
       ...props.configuration,
-      imageUrl: fileUrl,
+      files,
     });
-
+    setLoading(false);
     props.setVisible(false);
   };
 
   const cancelChanges = () => {
-    onChange({
-      ...props.configuration,
-      imageUrl: props.configuration.imageUrl,
-    });
-
     props.setVisible(false);
   };
 
-  const validateFile = (files: File[]) => {
+  const validateFiles = (files: File[]) => {
     setError(null);
     // ensure the first file type MIME is images png, jpg, jpeg, gif or svg and less than 5MB only
     if (files.length === 0) return false;
 
-    const file = files[0];
+    const errors: string[] = [];
+    files.forEach((file) => {
+      if (file.size > 25 * 1024 * 1024) {
+        errors.push("Files size must be less than 25MB");
+      }
 
-    if (file.size > 25 * 1024 * 1024) {
-      setError("File size must be less than 25MB");
+      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+        setError("File type must be png, jpg or jpeg");
+      }
+    });
+
+    if (errors.length > 0) {
+      setError(errors.join(", "));
       return false;
     }
-
-    const allowedTypes = ["image/png", "image/jpg", "image/jpeg"];
-    if (!allowedTypes.includes(file.type)) {
-      setError("File type must be png, jpg or jpeg");
-      return false;
-    }
-
-    setError(null);
 
     return true;
   };
 
-  useEffect(() => {
-    if (files.length === 0) {
-      setDisableUrl(false);
-      return;
-    }
-    setLoading(true);
-    setDisableUrl(true);
-    const file: File = files[0];
-    const uploadFile = async () => {
-      console.log(file);
+  const uploadFiles = async (files: File[]) => {
+    const s3Files = [];
+    for await (const file of files) {
       try {
-        const id = uuidv4();
-        const shortId = id.split("-")[0];
-        const url = await Storage.put(shortId, file, {
-          level: "public",
+        const response = await uploadFile(file);
+        s3Files.push({
+          key: `public/${response.key}`,
+          provider: FileStorageProvider.S3,
+          url: response.url,
         });
-        const signedUrl = await Storage.get(url.key, {
-          level: "public",
-          expires: 60 * 60,
-        });
-        setFileUrl(signedUrl);
       } catch (error) {
         const errorMessage = "Error uploading file: " + error;
         console.log(errorMessage);
         setError(errorMessage);
-        setDisableUrl(false);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    uploadFile();
-  }, [files]);
-
-  useEffect(() => {
-    if (fileUrl) {
-      setDisableFileUpload(true);
-    } else {
-      setDisableFileUpload(false);
     }
-  }, [fileUrl]);
+
+    if (error) {
+      return;
+    }
+
+    return s3Files;
+  };
+
+  const uploadFile = async (file: File) => {
+    console.log(file);
+    const id = uuidv4();
+    const shortId = id.split("-")[0];
+    const response = await Storage.put(shortId, file);
+    const url = await Storage.get(response.key);
+    return {
+      ...response,
+      url,
+    };
+  };
 
   return (
     <Modal
@@ -142,73 +144,53 @@ export default function ImageDialog(props: ImageDialogProps) {
             <Button variant="link" onClick={cancelChanges}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={saveConfig}>
+            <Button variant="primary" disabled={loading} onClick={saveConfig}>
               Save
             </Button>
           </SpaceBetween>
         </Box>
       }
-      header="Add image to conversation"
+      header="Add images to your message"
     >
       <Form>
         <SpaceBetween size="m">
           <FormField
-            label="URL"
-            errorText={errors.imageUrl}
-            description="You can set the URL of the image to be used for this conversation."
-          >
-            <Input
-              type="url"
-              value={fileUrl as string}
-              disabled={disableUrl}
-              onChange={({ detail: { value } }) => {
-                setFileUrl(value);
-              }}
-            />
-          </FormField>
-          <FormField
             label="Upload from device"
-            errorText={errors.filesUrl}
+            errorText={errors.files}
             description="You can upload an image to be used for this conversation."
           >
-            {!disableFileUpload && (
-              <FileUpload
-                onChange={({ detail }) => {
-                  if (!validateFile(detail.value)) return;
-                  setFiles(detail.value);
-                  setFileUrl(null);
-                }}
-                value={files}
-                i18nStrings={{
-                  uploadButtonText: (e) => (e ? "Choose files" : "Choose file"),
-                  dropzoneText: (e) =>
-                    e ? "Drop files to upload" : "Drop file to upload",
-                  removeFileAriaLabel: (e) => `Remove file ${e + 1}`,
-                  limitShowFewer: "Show fewer files",
-                  limitShowMore: "Show more files",
-                  errorIconAriaLabel: "Error",
-                }}
-                errorText={error}
-                showFileThumbnail
-                tokenLimit={3}
-                constraintText=".png, .jpg, .jpeg"
-              />
-            )}
-            {disableFileUpload && (
-              <Button
-                variant="primary"
-                onClick={() => {
-                  setFileUrl(null);
-                  setFiles([]);
-                  setDisableFileUpload(false);
-                }}
-              >
-                Upload a file
-              </Button>
-            )}
+            <FileUpload
+              onChange={({ detail }) => {
+                if (!validateFiles(detail.value)) return;
+                onChange({ files: detail.value });
+                setFiles(detail.value);
+              }}
+              value={files}
+              i18nStrings={{
+                uploadButtonText: (e) => (e ? "Choose files" : "Choose file"),
+                dropzoneText: (e) =>
+                  e ? "Drop files to upload" : "Drop file to upload",
+                removeFileAriaLabel: (e) => `Remove file ${e + 1}`,
+                limitShowFewer: "Show fewer files",
+                limitShowMore: "Show more files",
+                errorIconAriaLabel: "Error",
+              }}
+              multiple={false}
+              errorText={error}
+              showFileThumbnail
+              tokenLimit={3}
+              constraintText=".png, .jpg, .jpeg"
+            />
           </FormField>
-          {loading && <Spinner />}
-          {fileUrl && <img src={fileUrl} style={{ width: "100px" }} />}
+          {loading && (
+            <>
+              <div>
+                <Spinner />
+                <span style={{ marginLeft: "5px" }}>Saving files...</span>
+              </div>
+            </>
+          )}
+          {/*fileUrl && <img src={fileUrl} style={{ width: "100px" }} />*/}
         </SpaceBetween>
       </Form>
     </Modal>

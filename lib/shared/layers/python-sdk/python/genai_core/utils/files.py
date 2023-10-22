@@ -15,3 +15,12 @@ def file_exists(bucket, key):
             return False
         else:
             raise
+
+
+def get_signed_url(bucket, key, expires_in=3600, method="get_object", **kwargs):
+    url = s3.generate_presigned_url(
+        ClientMethod=method,
+        Params={"Bucket": bucket, "Key": key, **kwargs},
+        ExpiresIn=expires_in,
+    )
+    return url

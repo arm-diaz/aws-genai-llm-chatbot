@@ -7,7 +7,7 @@ export interface ChatBotConfiguration {
   maxTokens: number;
   temperature: number;
   topP: number;
-  imageUrl: string | null | undefined;
+  files: ImageFile[] | null;
 }
 
 export interface ChatInputState {
@@ -42,6 +42,16 @@ export enum ChatBotMode {
   Chain = "chain",
 }
 
+export enum FileStorageProvider {
+  S3 = "s3",
+}
+
+export interface ImageFile {
+  provider: FileStorageProvider;
+  key: string;
+  url: string;
+}
+
 export interface ChatBotRunRequest {
   action: ChatBotAction.Run;
   modelInterface: ModelInterface;
@@ -49,8 +59,7 @@ export interface ChatBotRunRequest {
     modelName: string;
     provider: string;
     sessionId?: string;
-    imageUrl: string | null | undefined;
-    filesUrl: null | string[];
+    files: ImageFile[] | null;
     text: string;
     mode: string;
     workspaceId?: string;
@@ -67,7 +76,7 @@ export interface ChatBotToken {
 export interface ChatBotHistoryItem {
   type: ChatBotMessageType;
   content: string;
-  metadata: Record<string, string | boolean | number | null | undefined>;
+  metadata: Record<string, string | boolean | number | null | undefined | ImageFile[]>;
   tokens?: ChatBotToken[];
 }
 
@@ -77,7 +86,7 @@ export interface ChatBotMessageResponse {
     sessionId: string;
     token?: ChatBotToken;
     content?: string;
-    metadata: Record<string, string | boolean | number | null | undefined>;
+    metadata: Record<string, string | boolean | number | null | undefined| ImageFile[]>;
   };
 }
 

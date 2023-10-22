@@ -113,6 +113,7 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
         messagesTopic: chatBotApi.messagesTopic,
         sessionsTable: chatBotApi.sessionsTable,
         byUserIdIndex: chatBotApi.byUserIdIndex,
+        chatbotFilesBucket: chatBotApi.filesBucket,
       });
 
       // Route all incoming messages to the langchain model interface queue
@@ -149,7 +150,7 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
       identityPool: authentication.identityPool,
       restApi: chatBotApi.restApi,
       webSocketApi: chatBotApi.webSocketApi,
-      attachmentsBucket: chatBotApi.attachmentsBucket,
+      chatbotFilesBucket: chatBotApi.filesBucket,
     });
   }
 }

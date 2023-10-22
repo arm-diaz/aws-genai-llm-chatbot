@@ -23,8 +23,7 @@ export default function Chat(props: { sessionId?: string }) {
       maxTokens: 512,
       temperature: 0.6,
       topP: 0.9,
-      imageUrl: null,
-      filesUrl: null,
+      files: null,
     })
   );
 

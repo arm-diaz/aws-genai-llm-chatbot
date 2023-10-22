@@ -1,20 +1,20 @@
+import * as apigwv2 from "@aws-cdk/aws-apigatewayv2-alpha";
+import * as cognitoIdentityPool from "@aws-cdk/aws-cognito-identitypool-alpha";
+import * as cdk from "aws-cdk-lib";
+import * as apigateway from "aws-cdk-lib/aws-apigateway";
+import * as cf from "aws-cdk-lib/aws-cloudfront";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as s3 from "aws-cdk-lib/aws-s3";
+import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
+import { Construct } from "constructs";
 import {
   ExecSyncOptionsWithBufferEncoding,
   execSync,
 } from "node:child_process";
-import { Construct } from "constructs";
-import { Utils } from "../shared/utils";
+import * as path from "node:path";
 import { Shared } from "../shared";
 import { SystemConfig } from "../shared/types";
-import * as path from "node:path";
-import * as cdk from "aws-cdk-lib";
-import * as cf from "aws-cdk-lib/aws-cloudfront";
-import * as s3 from "aws-cdk-lib/aws-s3";
-import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
-import * as apigateway from "aws-cdk-lib/aws-apigateway";
-import * as apigwv2 from "@aws-cdk/aws-apigatewayv2-alpha";
-import * as cognitoIdentityPool from "@aws-cdk/aws-cognito-identitypool-alpha";
-import * as iam from "aws-cdk-lib/aws-iam";
+import { Utils } from "../shared/utils";
 
 export interface UserInterfaceProps {
   readonly config: SystemConfig;
@@ -24,7 +24,7 @@ export interface UserInterfaceProps {
   readonly identityPool: cognitoIdentityPool.IdentityPool;
   readonly restApi: apigateway.RestApi;
   readonly webSocketApi: apigwv2.WebSocketApi;
-  readonly attachmentsBucket: s3.Bucket;
+  readonly chatbotFilesBucket: s3.Bucket;
 }
 
 export class UserInterface extends Construct {
@@ -44,7 +44,7 @@ export class UserInterface extends Construct {
 
     const originAccessIdentity = new cf.OriginAccessIdentity(this, "S3OAI");
     websiteBucket.grantRead(originAccessIdentity);
-    props.attachmentsBucket.grantRead(originAccessIdentity);
+    props.chatbotFilesBucket.grantRead(originAccessIdentity);
 
     const distribution = new cf.CloudFrontWebDistribution(
       this,
@@ -140,7 +140,7 @@ export class UserInterface extends Construct {
               },
             ],
             s3OriginSource: {
-              s3BucketSource: props.attachmentsBucket,
+              s3BucketSource: props.chatbotFilesBucket,
               originAccessIdentity,
             },
           },
@@ -164,7 +164,7 @@ export class UserInterface extends Construct {
       aws_cognito_identity_pool_id: props.identityPool.identityPoolId,
       Storage: {
         AWSS3: {
-          bucket: props.attachmentsBucket.bucketName,
+          bucket: props.chatbotFilesBucket.bucketName,
           region: cdk.Aws.REGION,
         },
       },
@@ -186,9 +186,9 @@ export class UserInterface extends Construct {
         effect: iam.Effect.ALLOW,
         actions: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
         resources: [
-          `${props.attachmentsBucket.bucketArn}/public/*`,
-          `${props.attachmentsBucket.bucketArn}/protected/\${cognito-identity.amazonaws.com:sub}/*`,
-          `${props.attachmentsBucket.bucketArn}/private/\${cognito-identity.amazonaws.com:sub}/*`,
+          `${props.chatbotFilesBucket.bucketArn}/public/*`,
+          `${props.chatbotFilesBucket.bucketArn}/protected/\${cognito-identity.amazonaws.com:sub}/*`,
+          `${props.chatbotFilesBucket.bucketArn}/private/\${cognito-identity.amazonaws.com:sub}/*`,
         ],
       })
     );
@@ -196,7 +196,7 @@ export class UserInterface extends Construct {
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: ["s3:ListBucket"],
-        resources: [`${props.attachmentsBucket.bucketArn}`],
+        resources: [`${props.chatbotFilesBucket.bucketArn}`],
         conditions: {
           StringLike: {
             "s3:prefix": [
@@ -214,7 +214,7 @@ export class UserInterface extends Construct {
 
     // Enable CORS for the attachments bucket to allow uploads from the user interface
     // ref: https://docs.amplify.aws/lib/storage/getting-started/q/platform/js/#amazon-s3-bucket-cors-policy-setup
-    props.attachmentsBucket.addCorsRule({
+    props.chatbotFilesBucket.addCorsRule({
       allowedMethods: [
         s3.HttpMethods.GET,
         s3.HttpMethods.PUT,

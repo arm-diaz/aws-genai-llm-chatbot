@@ -24,12 +24,14 @@ export class Shared extends Construct {
   readonly lambdaArchitecture: lambda.Architecture = lambdaArchitecture;
   readonly xOriginVerifySecret: secretsmanager.Secret;
   readonly apiKeysSecret: secretsmanager.Secret;
-  readonly commonLayer: Layer;
+  readonly commonLayer: lambda.ILayerVersion;
   readonly powerToolsLayer: lambda.ILayerVersion;
   readonly pythonSDKLayer: lambda.ILayerVersion;
 
   constructor(scope: Construct, id: string, props: SharedProps) {
     super(scope, id);
+
+    const powerToolsLayerVersion = "45";
 
     this.defaultEnvironmentVariables = {
       POWERTOOLS_DEV: "true",
@@ -103,8 +105,8 @@ export class Shared extends Construct {
 
     const powerToolsArn =
       lambdaArchitecture === lambda.Architecture.X86_64
-        ? `arn:aws:lambda:${cdk.Aws.REGION}:017000801446:layer:AWSLambdaPowertoolsPythonV2:42`
-        : `arn:aws:lambda:${cdk.Aws.REGION}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:42`;
+        ? `arn:${cdk.Aws.PARTITION}:lambda:${cdk.Aws.REGION}:017000801446:layer:AWSLambdaPowertoolsPythonV2:${powerToolsLayerVersion}`
+        : `arn:${cdk.Aws.PARTITION}:lambda:${cdk.Aws.REGION}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:${powerToolsLayerVersion}`;
 
     const powerToolsLayer = lambda.LayerVersion.fromLayerVersionArn(
       this,
@@ -145,11 +147,11 @@ export class Shared extends Construct {
 
     this.vpc = vpc;
     this.configParameter = configParameter;
-    this.commonLayer = commonLayer;
     this.xOriginVerifySecret = xOriginVerifySecret;
     this.apiKeysSecret = apiKeysSecret;
-    this.pythonSDKLayer = pythonSDKLayer;
     this.powerToolsLayer = powerToolsLayer;
+    this.commonLayer = commonLayer.layer;
+    this.pythonSDKLayer = pythonSDKLayer;
 
     new cdk.CfnOutput(this, "ApiKeysSecretName", {
       value: apiKeysSecret.secretName,

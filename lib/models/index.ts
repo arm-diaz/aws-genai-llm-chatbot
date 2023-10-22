@@ -1,20 +1,20 @@
 import * as cdk from "aws-cdk-lib";
+import * as ssm from "aws-cdk-lib/aws-ssm";
 import { Construct } from "constructs";
-import { Shared } from "../shared";
 import {
   ContainerImages,
   DeploymentType,
   SageMakerModel,
 } from "../sagemaker-model";
+import { Shared } from "../shared";
 import {
+  Modality,
+  ModelInterface,
   SageMakerModelEndpoint,
   SupportedSageMakerLLM,
   SupportedSageMakerVLM,
   SystemConfig,
-  Modality,
-  ModelInterface,
 } from "../shared/types";
-import * as ssm from "aws-cdk-lib/aws-ssm";
 
 export interface ModelsProps {
   readonly config: SystemConfig;
@@ -158,22 +158,22 @@ export class Models extends Construct {
               lazy: true,
               mapping: {
                 "ap-southeast-1": {
-                  arn: "arn:aws:sagemaker:ap-southeast-1:192199979996:model-package/llama2-13b-v4-c4de6690de6132cb962827bec6ef6811",
+                  arn: `arn:${cdk.Aws.PARTITION}:sagemaker:ap-southeast-1:192199979996:model-package/llama2-13b-v4-c4de6690de6132cb962827bec6ef6811`,
                 },
                 "ap-southeast-2": {
-                  arn: "arn:aws:sagemaker:ap-southeast-2:666831318237:model-package/llama2-13b-v4-c4de6690de6132cb962827bec6ef6811",
+                  arn: `arn:${cdk.Aws.PARTITION}:sagemaker:ap-southeast-2:666831318237:model-package/llama2-13b-v4-c4de6690de6132cb962827bec6ef6811`,
                 },
                 "eu-west-1": {
-                  arn: "arn:aws:sagemaker:eu-west-1:985815980388:model-package/llama2-13b-v4-c4de6690de6132cb962827bec6ef6811",
+                  arn: `arn:${cdk.Aws.PARTITION}:sagemaker:eu-west-1:985815980388:model-package/llama2-13b-v4-c4de6690de6132cb962827bec6ef6811`,
                 },
                 "us-east-1": {
-                  arn: "arn:aws:sagemaker:us-east-1:865070037744:model-package/llama2-13b-v4-c4de6690de6132cb962827bec6ef6811",
+                  arn: `arn:${cdk.Aws.PARTITION}:sagemaker:us-east-1:865070037744:model-package/llama2-13b-v4-c4de6690de6132cb962827bec6ef6811`,
                 },
                 "us-east-2": {
-                  arn: "arn:aws:sagemaker:us-east-2:057799348421:model-package/llama2-13b-v4-c4de6690de6132cb962827bec6ef6811",
+                  arn: `arn:${cdk.Aws.PARTITION}:sagemaker:us-east-2:057799348421:model-package/llama2-13b-v4-c4de6690de6132cb962827bec6ef6811`,
                 },
                 "us-west-2": {
-                  arn: "arn:aws:sagemaker:us-west-2:594846645681:model-package/llama2-13b-v4-c4de6690de6132cb962827bec6ef6811",
+                  arn: `arn:${cdk.Aws.PARTITION}:sagemaker:us-west-2:594846645681:model-package/llama2-13b-v4-c4de6690de6132cb962827bec6ef6811`,
                 },
               },
             }),
@@ -217,22 +217,22 @@ export class Models extends Construct {
               lazy: true,
               mapping: {
                 "ap-southeast-1": {
-                  arn: "arn:aws:sagemaker:ap-southeast-1:192199979996:model-package/llama2-13b-f-v4-55c7c39a0cf535e8bad0d342598c219b",
+                  arn: `arn:${cdk.Aws.PARTITION}:sagemaker:ap-southeast-1:192199979996:model-package/llama2-13b-f-v4-55c7c39a0cf535e8bad0d342598c219b`,
                 },
                 "ap-southeast-2": {
-                  arn: "arn:aws:sagemaker:ap-southeast-2:666831318237:model-package/llama2-13b-f-v4-55c7c39a0cf535e8bad0d342598c219b",
+                  arn: `arn:${cdk.Aws.PARTITION}:sagemaker:ap-southeast-2:666831318237:model-package/llama2-13b-f-v4-55c7c39a0cf535e8bad0d342598c219b`,
                 },
                 "eu-west-1": {
-                  arn: "arn:aws:sagemaker:eu-west-1:985815980388:model-package/llama2-13b-f-v4-55c7c39a0cf535e8bad0d342598c219b",
+                  arn: `arn:${cdk.Aws.PARTITION}:sagemaker:eu-west-1:985815980388:model-package/llama2-13b-f-v4-55c7c39a0cf535e8bad0d342598c219b`,
                 },
                 "us-east-1": {
-                  arn: "arn:aws:sagemaker:us-east-1:865070037744:model-package/llama2-13b-f-v4-55c7c39a0cf535e8bad0d342598c219b",
+                  arn: `arn:${cdk.Aws.PARTITION}:sagemaker:us-east-1:865070037744:model-package/llama2-13b-f-v4-55c7c39a0cf535e8bad0d342598c219b`,
                 },
                 "us-east-2": {
-                  arn: "arn:aws:sagemaker:us-east-2:057799348421:model-package/llama2-13b-f-v4-55c7c39a0cf535e8bad0d342598c219b",
+                  arn: `arn:${cdk.Aws.PARTITION}:sagemaker:us-east-2:057799348421:model-package/llama2-13b-f-v4-55c7c39a0cf535e8bad0d342598c219b`,
                 },
                 "us-west-2": {
-                  arn: "arn:aws:sagemaker:us-west-2:594846645681:model-package/llama2-13b-f-v4-55c7c39a0cf535e8bad0d342598c219b",
+                  arn: `arn:${cdk.Aws.PARTITION}:sagemaker:us-west-2:594846645681:model-package/llama2-13b-f-v4-55c7c39a0cf535e8bad0d342598c219b`,
                 },
               },
             }),

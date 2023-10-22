@@ -88,7 +88,6 @@ def handle_run(record):
     response = model.run(
         prompt=prompt,
         workspace_id=workspace_id,
-        tools=[],
     )
 
     logger.info(response)

@@ -1,6 +1,6 @@
+import * as cognitoIdentityPool from "@aws-cdk/aws-cognito-identitypool-alpha";
 import * as cdk from "aws-cdk-lib";
 import * as cognito from "aws-cdk-lib/aws-cognito";
-import * as cognitoIdentityPool from "@aws-cdk/aws-cognito-identitypool-alpha";
 import { Construct } from "constructs";
 
 export class Authentication extends Construct {
