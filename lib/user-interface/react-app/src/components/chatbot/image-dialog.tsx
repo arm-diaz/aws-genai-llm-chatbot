@@ -40,18 +40,16 @@ export default function ImageDialog(props: ImageDialogProps) {
       return retValue;
     },
     validate: (form) => {
-      const errors: Record<string, string | string[]> = {};
+      const errors: Record<string, string | string[]> | null = {};
       console.log(form);
       if (!form.files || form.files.length === 0) {
-        errors.files = "Please upload a file";
-        return errors;
+        errors.files = "Please choose a file";
       }
 
       if (!validateFiles(form.files)) {
-        errors.files = "Files validation failed";
-        return errors;
+        errors.files = "File size or type is invalid";
       }
-      console.log(errors);
+
       return errors;
     },
   });
@@ -72,6 +70,8 @@ export default function ImageDialog(props: ImageDialogProps) {
   };
 
   const cancelChanges = () => {
+    setFiles([]);
+    setLoading(false);
     props.setVisible(false);
   };
 
@@ -87,7 +87,7 @@ export default function ImageDialog(props: ImageDialogProps) {
       }
 
       if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-        setError("File type must be png, jpg or jpeg");
+        errors.push("Files size must be less than 25MB");
       }
     });
 
@@ -142,8 +142,8 @@ export default function ImageDialog(props: ImageDialogProps) {
             <Button variant="link" onClick={cancelChanges}>
               Cancel
             </Button>
-            <Button variant="primary" disabled={loading} onClick={saveConfig}>
-              Save
+            <Button variant="primary" disabled={loading || !files.length} onClick={saveConfig}>
+              Add
             </Button>
           </SpaceBetween>
         </Box>
@@ -159,7 +159,6 @@ export default function ImageDialog(props: ImageDialogProps) {
           >
             <FileUpload
               onChange={({ detail }) => {
-                if (!validateFiles(detail.value)) return;
                 onChange({ files: detail.value });
                 setFiles(detail.value);
               }}
@@ -184,11 +183,10 @@ export default function ImageDialog(props: ImageDialogProps) {
             <>
               <div>
                 <Spinner />
-                <span style={{ marginLeft: "5px" }}>Saving files...</span>
+                <span style={{ marginLeft: "5px" }}>Adding file...</span>
               </div>
             </>
           )}
-          {/*fileUrl && <img src={fileUrl} style={{ width: "100px" }} />*/}
         </SpaceBetween>
       </Form>
     </Modal>
