@@ -49,5 +49,16 @@ class Direction(Enum):
     OUT = "OUT"
 
 
+class ChatbotMode(Enum):
+    CHAIN = "chain"
+
+
 class ChatbotAction(Enum):
+    RUN = "run"
+    LLM_NEW_TOKEN = "llm_new_token"
     FINAL_RESPONSE = "final_response"
+
+
+class ChatbotMessageType(Enum):
+    Human = "Human"
+    AI = "AI"

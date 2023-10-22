@@ -1,23 +1,26 @@
 import {
-  Container,
-  SpaceBetween,
-  ExpandableSection,
-  TextContent,
-  Spinner,
   Box,
-  Popover,
   Button,
+  Container,
+  ExpandableSection,
+  Popover,
+  SpaceBetween,
+  Spinner,
   StatusIndicator,
+  TextContent,
 } from "@cloudscape-design/components";
+import { Dispatch, useEffect, useState } from "react";
+import { JsonView, darkStyles } from "react-json-view-lite";
+import ReactMarkdown from "react-markdown";
+import styles from "../../styles/chat.module.scss";
 import {
   ChatBotConfiguration,
   ChatBotHistoryItem,
   ChatBotMessageType,
+  ImageFile,
 } from "./types";
-import { JsonView, darkStyles } from "react-json-view-lite";
-import ReactMarkdown from "react-markdown";
-import { Dispatch } from "react";
-import styles from "../../styles/chat.module.scss";
+
+import { getSignedUrl } from "./utils";
 
 import "react-json-view-lite/dist/index.css";
 
@@ -28,6 +31,34 @@ export interface ChatMessageProps {
 }
 
 export default function ChatMessage(props: ChatMessageProps) {
+  const [loading, setLoading] = useState<boolean>(false);
+  const [message] = useState<ChatBotHistoryItem>(props.message);
+  const [files, setFiles] = useState<ImageFile[]>([] as ImageFile[]);
+
+  useEffect(() => {
+    const getSignedUrls = async () => {
+      setLoading(true);
+      if (message.metadata?.files as ImageFile[]) {
+        const files: ImageFile[] = [];
+        for await (const file of message.metadata?.files as ImageFile[]) {
+          const key = file.key.split("/")[1];
+          const signedUrl = await getSignedUrl(key);
+          files.push({
+            ...file,
+            url: signedUrl as string,
+          });
+        }
+
+        setLoading(false);
+        setFiles(files);
+      }
+    };
+
+    if (message.metadata?.files as ImageFile[]) {
+      getSignedUrls();
+    }
+  }, [message]);
+
   return (
     <div>
       {props.message?.type === ChatBotMessageType.AI && (
@@ -43,7 +74,7 @@ export default function ChatMessage(props: ChatMessageProps) {
         >
           <SpaceBetween size="s" direction="vertical">
             {props.message.content.length === 0 ? (
-              <Box float="left">
+              <Box>
                 <Spinner />
               </Box>
             ) : null}
@@ -74,19 +105,26 @@ export default function ChatMessage(props: ChatMessageProps) {
           </SpaceBetween>
         </Container>
       )}
-      {props.message?.type === ChatBotMessageType.Human && (
+      {loading && (
+        <Box float="left">
+          <Spinner />
+        </Box>
+      )}
+      {files && !loading && (
         <>
-          {props.message.metadata?.imageUrl &&
-            props.message?.type === ChatBotMessageType.Human && (
-              <img
-                src={props.message.metadata?.imageUrl as string}
-                className={styles.img_chabot_message}
-              />
-            )}
-          <TextContent>
-            <strong>{props.message.content}</strong>
-          </TextContent>
+          {files.map((file, idx) => (
+            <img
+              key={idx}
+              src={file.url as string}
+              className={styles.img_chabot_message}
+            />
+          ))}
         </>
+      )}
+      {props.message?.type === ChatBotMessageType.Human && (
+        <TextContent>
+          <strong>{props.message.content}</strong>
+        </TextContent>
       )}
     </div>
   );

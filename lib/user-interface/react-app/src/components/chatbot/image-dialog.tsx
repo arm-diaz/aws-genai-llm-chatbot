@@ -66,6 +66,7 @@ export default function ImageDialog(props: ImageDialogProps) {
       ...props.configuration,
       files,
     });
+    setFiles([]);
     setLoading(false);
     props.setVisible(false);
   };
@@ -106,7 +107,6 @@ export default function ImageDialog(props: ImageDialogProps) {
         s3Files.push({
           key: `public/${response.key}`,
           provider: FileStorageProvider.S3,
-          url: response.url,
         });
       } catch (error) {
         const errorMessage = "Error uploading file: " + error;
@@ -127,10 +127,8 @@ export default function ImageDialog(props: ImageDialogProps) {
     const id = uuidv4();
     const shortId = id.split("-")[0];
     const response = await Storage.put(shortId, file);
-    const url = await Storage.get(response.key);
     return {
       ...response,
-      url,
     };
   };
 

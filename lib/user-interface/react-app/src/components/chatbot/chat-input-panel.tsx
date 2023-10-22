@@ -1,13 +1,14 @@
 import {
   Button,
-  Select,
-  SpaceBetween,
-  StatusIndicator,
-  SelectProps,
   Container,
-  Spinner,
   Icon,
+  Select,
+  SelectProps,
+  SpaceBetween,
+  Spinner,
+  StatusIndicator,
 } from "@cloudscape-design/components";
+import { Auth } from "aws-amplify";
 import {
   Dispatch,
   SetStateAction,
@@ -16,38 +17,38 @@ import {
   useLayoutEffect,
   useState,
 } from "react";
-import useWebSocket, { ReadyState } from "react-use-websocket";
+import { useNavigate } from "react-router-dom";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
-import { Auth } from "aws-amplify";
-import { AppContext } from "../../common/app-context";
-import {
-  ChatBotConfiguration,
-  ChatBotAction,
-  ChatBotMode,
-  ChatBotHistoryItem,
-  ChatBotMessageResponse,
-  ChatBotMessageType,
-  ChatBotRunRequest,
-  ChatInputState,
-  ChabotInputModality,
-} from "./types";
 import TextareaAutosize from "react-textarea-autosize";
+import useWebSocket, { ReadyState } from "react-use-websocket";
 import { ApiClient } from "../../common/api-client/api-client";
+import { AppContext } from "../../common/app-context";
+import { OptionsHelper } from "../../common/helpers/options-helper";
+import { StorageHelper } from "../../common/helpers/storage-helper";
 import {
   ApiResult,
   ModelItem,
   ResultValue,
   WorkspaceItem,
 } from "../../common/types";
-import { OptionsHelper } from "../../common/helpers/options-helper";
-import { useNavigate } from "react-router-dom";
+import styles from "../../styles/chat.module.scss";
 import ConfigDialog from "./config-dialog";
 import ImageDialog from "./image-dialog";
-import { StorageHelper } from "../../common/helpers/storage-helper";
-import styles from "../../styles/chat.module.scss";
-import { updateMessageHistory } from "./utils";
+import {
+  ChabotInputModality,
+  ChatBotAction,
+  ChatBotConfiguration,
+  ChatBotHistoryItem,
+  ChatBotMessageResponse,
+  ChatBotMessageType,
+  ChatBotMode,
+  ChatBotRunRequest,
+  ChatInputState,
+  ImageFile,
+} from "./types";
+import { getSignedUrl, updateMessageHistory } from "./utils";
 
 export interface ChatInputPanelProps {
   running: boolean;
@@ -93,6 +94,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
   });
   const [configDialogVisible, setConfigDialogVisible] = useState(false);
   const [imageDialogVisible, setImageDialogVisible] = useState(false);
+  const [files, setFiles] = useState<ImageFile[]>([]);
   const [socketUrl, setSocketUrl] = useState<string | null>(null);
   const { sendJsonMessage, readyState } = useWebSocket(socketUrl, {
     share: true,
@@ -218,6 +220,28 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     }
   }, [props.messageHistory]);
 
+  useEffect(() => {
+    const getSignedUrls = async () => {
+      if (props.configuration?.files as ImageFile[]) {
+        const files: ImageFile[] = [];
+        for await (const file of props.configuration!.files as ImageFile[]) {
+          const key = file.key.split("/")[1];
+          const signedUrl = await getSignedUrl(key);
+          files.push({
+            ...file,
+            url: signedUrl as string,
+          });
+        }
+
+        setFiles(files);
+      }
+    };
+
+    if (props.configuration.files?.length) {
+      getSignedUrls();
+    }
+  }, [props.configuration]);
+
   const handleSendMessage = () => {
     if (!state.selectedModel) return;
     if (props.running) return;
@@ -235,7 +259,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       data: {
         mode: ChatBotMode.Chain,
         text: value,
-        files: props.configuration.files || null,
+        files: props.configuration.files || [],
         modelName: name,
         provider: provider,
         sessionId: props.session.id,
@@ -253,10 +277,11 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       ...state,
       value: "",
     }));
+    setFiles([]);
 
     props.setConfiguration({
       ...props.configuration,
-      files: null,
+      files: [],
     });
 
     props.setRunning(true);
@@ -373,7 +398,8 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             {state.selectedModelMetadata?.inputModalities.includes(
               ChabotInputModality.Image
             ) &&
-              props.configuration.files?.map((file, idx) => (
+              files.length > 0 &&
+              files.map((file, idx) => (
                 <img
                   key={idx}
                   onClick={() => setImageDialogVisible(true)}
@@ -386,8 +412,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                     marginRight: "8px",
                   }}
                 />
-              ))
-            }
+              ))}
             <Button
               disabled={
                 readyState !== ReadyState.OPEN ||

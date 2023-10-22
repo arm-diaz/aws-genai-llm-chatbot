@@ -14,7 +14,7 @@ from langchain.llms import SagemakerEndpoint
 from genai_core.utils.files import get_signed_url
 from genai_core.langchain import DynamoDBChatMessageHistory
 from genai_core.utils.websocket import send_to_client
-from genai_core.types import ChatbotAction
+from genai_core.types import ChatbotAction, ChatbotMessageType
 
 from content_handler import ContentHandler
 
@@ -35,6 +35,9 @@ def handle_run(record):
     session_id = data.get("sessionId")
     files = data.get("files", [])
 
+    if not files:
+        files = []
+
     if not session_id:
         session_id = str(uuid.uuid4())
 
@@ -48,14 +51,13 @@ def handle_run(record):
 
     params = {
         "do_sample": True,
-        "return_full_text": False,
         "top_p": 0.2,
         "temperature": 0.4,
         "top_k": 50,
         "max_new_tokens": 512,
         "stop": ["User:", "<end_of_utterance>"],
     }
-
+    print(model_kwargs)
     params = {}
     if "temperature" in model_kwargs:
         params["temperature"] = model_kwargs["temperature"]
@@ -64,62 +66,66 @@ def handle_run(record):
     if "maxTokens" in model_kwargs:
         params["max_new_tokens"] = model_kwargs["maxTokens"]
 
-    print("messages")
-    print(messages)
-    human_prompt_template = "User:{prompt}"
-    image_prompt_tempalte = "{imageUrl}"
+    human_prompt_template = "User:{prompt}![]({image})"
     ai_prompt_template = "Assistant:{prompt}"
 
     prompts = []
     for message in messages:
-        if message.type == "human":
-            prompts.append(
-                human_prompt_template.format(prompt=message.content, imageUrl="")
-            )
-        if message.type == "ai":
+        if message.type == ChatbotMessageType.Human.value:
+            message_files = message.additional_kwargs.get("files", [])
+            for message_file in message_files:
+                prompts.append(
+                    human_prompt_template.format(
+                        prompt=message.content,
+                        image=get_signed_url(
+                            os.environ["CHATBOT_FILES_BUCKET_NAME"], message_file["key"]
+                        ),
+                    )
+                )
+        if message.type == ChatbotMessageType.AI.value:
             prompts.append(ai_prompt_template.format(prompt=message.content))
 
-    # prompts.append(human_prompt_template.format(prompt=prompt, imageUrl=imageUrl))
     for file in files:
         key = file["key"]
         prompts.append(
-            image_prompt_tempalte.format(
-                imageUrl=get_signed_url(os.environ["CHATBOT_FILES_BUCKET_NAME"], key)
+            human_prompt_template.format(
+                prompt=prompt,
+                image=get_signed_url(os.environ["CHATBOT_FILES_BUCKET_NAME"], key),
             )
         )
-    prompts.append(human_prompt_template.format(prompt=prompt))
-
     prompts.append("<end_of_utterance>\nAssistant:")
-    print(prompts)
 
     prompt_template = "\n".join(prompts)
+    print(prompt_template)
 
-    llm = SagemakerEndpoint(
+    mlm = SagemakerEndpoint(
         endpoint_name=model_id,
         region_name=os.environ["AWS_REGION"],
         model_kwargs=params,
         content_handler=ContentHandler(),
     )
 
-    llm_response = llm.predict(prompt_template)
+    mlm_response = mlm.predict(prompt_template)
 
     metadata = {
+        "provider": provider,
         "modelId": model_id,
         "modelKwargs": model_kwargs,
         "mode": mode,
         "sessionId": session_id,
         "userId": user_id,
-        "files": files,
     }
+    if files:
+        metadata["files"] = files
 
     chat_history.add_user_message(prompt)
     chat_history.add_metadata(metadata)
-    chat_history.add_ai_message(llm_response)
+    chat_history.add_ai_message(mlm_response)
 
     response = {
         "sessionId": session_id,
         "type": "text",
-        "content": llm_response,
+        "content": mlm_response,
     }
 
     send_to_client(
@@ -141,7 +147,7 @@ def record_handler(record: SQSRecord):
     detail: dict = json.loads(message["Message"])
     logger.info(detail)
 
-    if detail["action"] == "run":
+    if detail["action"] == ChatbotAction.RUN.value:
         handle_run(detail)
 
 
